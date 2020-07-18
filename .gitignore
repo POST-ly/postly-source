@@ -2,24 +2,14 @@
 
 # compiled output
 
-/designs
 /tests
 POSTly.rar
 POST-ly.github.io.rar
 /stuff
 
-/server
-
 /server/app.jpg
 /server/app.mp4
 /server/app.pdf
-/server/graphql.js
-
-/src
-
-/bundler
-build.js
-buildcss.js
 
 postly-proxy-server/.git
 
