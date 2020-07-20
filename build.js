@@ -64,6 +64,6 @@ var filesToBundle = [
     "./src/js/startup.js"
 ]
 
-var writeToFile = "./build/js/build.js"
+var writeToFile = "./post-ly.github.io/js/build.js"
 
 bundle(filesToBundle, writeToFile)

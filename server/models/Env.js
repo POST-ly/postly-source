@@ -1,6 +1,9 @@
 const log = console.log
 const mongoose = require('mongoose')
 
+/**
+ * "name": 
+ */
 let EnvSchema = new mongoose.Schema({
     name: String,
     teamId: mongoose.Schema.Types.ObjectId,

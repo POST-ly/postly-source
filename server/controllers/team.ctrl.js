@@ -1,6 +1,5 @@
 /** */
 const Team = require('./../models/Team')
-const TeamBelong = require('./../models/TeamBelong')
 const Collection = require("./../models/Collection")
 const Request = require("./../models/Request")
 
@@ -30,66 +29,29 @@ module.exports = {
         })
     },
     getTeamsByUserId: (req, res, next) => {
-        TeamBelong.getTeamIdByUserId(req.params.userId, (err, teamsId) => {
-            const teams = []
-            teamsId.forEach(tid => {
-                Team.getTeamById(tid.teamId, (err, team) => {
-                    teams.push(team)
-                })
-            })
-            res.send(teams)
-        })
     },
     createTeam: (req, res, next) => {
+        /*
         const {
             userId,
             teamName
         } = req.body
-        Team.createNewTeam({
-            name: teamName
-        }, (err, newTeam) => {
-            if (err)
-                res.send(err)
-            else if (!newTeam)
-                res.send(404)
-            else {
-                TeamBelong.addNewTeamBelong({
-                    role: "owner",
-                    teamId: newTeam.id,
-                    userId: userId
-                }, (err, newTeamB) => {
-                    if (err)
-                        res.send(err)
-                    else if (!newTeamB)
-                        res.send(404)
-                    else
-                        res.send(newTeam)
-                })
-            }
-            next()                        
-        })
+        */
+        var newTeam = Team.create(req.body)
+        res.send(newTeam)
     },
 
     addUserToTeam: (req, res, next) => {
         // TODO: check if the user adding the user has privs.
+        /*
         const {
             userIdToAdd,
             roleOfUserToAdd,
             userId,
             teamId
         } = req.body
-        TeamBelong.addNewTeamBelong({
-            teamId,
-            userId: userIdToAdd,
-            role: roleOfUserToAdd
-        }, (err, newTeamB) => {
-            if(!err) {
-                res.send({
-                    success: true,
-                    msg: "New user successfully added."
-                })
-            }
-        })
+        */
+        
     },
 
     changeUserRoleOnTeam: (req, res, next) => {
@@ -99,17 +61,6 @@ module.exports = {
             teamId,
             roleToChangeTo
         } = req.body
-        TeamBelong.changeUserRoleOnTeam({
-            teamId,
-            userId: userIdToChangeRole,
-            role: roleToChangeTo
-        }, (err, newTeamB) => {
-            if(!err) {
-                res.send({ success: true })
-            } else {
-                res.send(newTeamB)
-            }
-        })
     },
 
     removeUserFromTeam: (req, res, next) => {
@@ -118,16 +69,6 @@ module.exports = {
             userId,
             teamId
         } = req.body
-        TeamBelong.removeUserFromTeam({
-            teamId,
-            userId: userIdToRemoveFromTeam
-        }, (err, removedTeamB) => {
-            if(!err) {
-                res.send({ success: true, msg: "User removed from team.", ...newTeamB })
-            } else {
-                res.send(newTeamB)
-            }
-        })
     },
 
     addCollectionToTeam: (req, res, next) => {

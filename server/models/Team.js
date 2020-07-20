@@ -3,8 +3,14 @@ const mongoose = require('mongoose')
 
 let TeamSchema = new mongoose.Schema({
     name: String,
-    collections: [ mongoose.Schema.Types.ObjectId ],
-    users: [ { role: String, id: mongoose.Schema.Types.ObjectId } ]
+    collections: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Collecion"
+    }],
+    users: [{
+        role: String, 
+        id: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+    }]
 })
 
 module.exports = mongoose.model('Team', TeamSchema)

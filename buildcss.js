@@ -1,4 +1,6 @@
 const bundle = require("./bundler/bundler")
+const fs = require("fs")
+
 var filesToBundle = [
 
         "./src/css/simple-line-icons.css",
@@ -17,6 +19,12 @@ var filesToBundle = [
 ]
 
 
-var writeToFile = "./build/css/build.css"
+var writeToFile = "./post-ly.github.io/css/build.css"
+
+// if writeToFile exists, delete and create new
+// if writeToFile does not exist, create new
+if (fs.existsSync(writeToFile)) {
+        
+}
 
 bundle(filesToBundle, writeToFile)

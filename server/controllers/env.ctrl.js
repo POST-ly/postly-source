@@ -17,7 +17,8 @@ module.exports = {
 
     },
     createEnv: (req, res, next) => {
-        var newEnv = Env.create()
+        log(req.body)
+        var newEnv = Env.create(req.body)
         res.send(newEnv)
     },
     getEnv: (req, res, next) => {
