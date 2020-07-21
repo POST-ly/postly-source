@@ -23,8 +23,11 @@ var writeToFile = "./post-ly.github.io/css/build.css"
 
 // if writeToFile exists, delete and create new
 // if writeToFile does not exist, create new
-if (fs.existsSync(writeToFile)) {
-        
+if (!fs.existsSync(writeToFile)) {
+     fs.writeFileSync(writeToFile)   
+} else {
+        // then, it exists. Delete and write new
+        fs.writeFileSync(writeToFile, "")
 }
 
 bundle(filesToBundle, writeToFile)

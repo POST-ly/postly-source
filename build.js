@@ -1,4 +1,6 @@
 const bundle = require("./bundler/bundler")
+const fs = require("fs")
+
 var filesToBundle = [
     "./src/js/polyfills/core.min.js",
     "./src/js/polyfills/library.min.js",
@@ -11,7 +13,7 @@ var filesToBundle = [
 
     "./src/js/libs/axios/axios.min.js",
     "./src/js/libs/mustachejs/mustache.min.js",
-    "./src/js/libs/dexie/dexie.js",
+    "./src/js/libs/dexie/dexie.min.js",
 
     "./src/js/utils.js",
 
@@ -65,5 +67,14 @@ var filesToBundle = [
 ]
 
 var writeToFile = "./post-ly.github.io/js/build.js"
+
+// if writeToFile exists, delete and create new
+// if writeToFile does not exist, create new
+if (!fs.existsSync(writeToFile)) {
+  fs.writeFileSync(writeToFile);
+} else {
+  // then, it exists. Delete and write new
+  fs.writeFileSync(writeToFile, "");
+}
 
 bundle(filesToBundle, writeToFile)

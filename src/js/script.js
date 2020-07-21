@@ -55,9 +55,9 @@ function send(event, tabId) {
     try {
         if(postData[tabId].authorization) {
             if(postData[tabId].authorization.type == "APIKey") {
-                url += generateAuth(headers, url, "Request")
+                url += generateAuth(headers, url, tabId, "Request")
             } else {
-                headers["Authorization"] = generateAuth()
+                headers["Authorization"] = generateAuth(headers, url, tabId, "Request")
             }
         }
     } catch (e) {}

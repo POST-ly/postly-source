@@ -276,7 +276,7 @@ function generateAuth(headers, url, tabId, type) {
         generateAuthRequest
     }
 
-    generateAuthStrategy["generateAuth" + type](headers, url, tabId)
+    return generateAuthStrategy["generateAuth" + type](headers, url, tabId)
 }
 
 function generateAuthCollection(req, authorization) {

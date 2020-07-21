@@ -1,16 +1,18 @@
 /** require dependencies */
 const express = require("express")
-const routes = require('./routes/')
 const mongoose = require('mongoose')
 const cors = require('cors')
 const bodyParser = require('body-parser')
 const helmet = require('helmet')
 const path = require('path')
 
+const routes = require('./routes/')
+const midWares = require("./middlewares")
+
 const app = express()
 const router = express.Router()
 const url = process.env.MONGODB_URI || "mongodb://localhost:27017/postly"
-
+    
 /** connect to MongoDB datastore */
 try {
     mongoose.connect(url, {
