@@ -300,30 +300,6 @@ function runCollectionTests(tests, api) {
     return testResult
 }
 
-function setPostlyAPI(res) {
-    var _postly = {}
-    var data = res.data
-    var headers = res.headers
-    var status = res.status
-    var statusText = res.statusText
-
-    // set postly data
-    _postly.config = res
-
-    _postly.response = data
-
-    // set postly responseCodeText
-    _postly.responseCodeText = statusText
-
-    // set postly responseCode
-    _postly.responseCode = status
-
-    // Set response headers to postly
-    _postly.headers = headers
-
-    return _postly
-}
-
 function extractRunnableRequests(reqs) {
     return reqs.filter(req => { 
         if(req.collectionRun) {

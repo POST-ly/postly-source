@@ -12,6 +12,7 @@ function addNewMockServerIdb(data, cb) {
     }).then(function(returnedMockServers) {
         return cb(true, returnedMockServers)
     }).catch(function(err) {
+        handleIdbError(err)
         return cb(false, err)
     })
 }

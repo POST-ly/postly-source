@@ -3,7 +3,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('./../models/User')
-const {hashPassword} = require("./../utils")
+const { hashPassword } = require("./../utils")
 const log = console.log
 
 module.exports = {

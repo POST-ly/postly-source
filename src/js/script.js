@@ -156,12 +156,12 @@ function setMethodType(tabId, method) {
     showDropdown("." + tabId + "methodTypeDropdown")
 }
 
-function addBody(bodyKey, bodyValue) {
+function addBody(bodyKey, bodyValue, r, r_id) {
     // log(bodyKey, bodyValue)
     if(!bodyKey.value.length > 0 || !bodyValue.value.length > 0)
         return
 
-    var id = "bodyForm" + Date.now()
+    var id = r_id ? r_id : "bodyForm" + Date.now()
     var data = {
         id,
         "key": bodyKey.value,
@@ -178,7 +178,8 @@ function addBody(bodyKey, bodyValue) {
     tr.setAttribute("id", id)
     tr.innerHTML = h
 
-    postData[currentTab].body.form.push(data)
+    if(!r)
+        postData[currentTab].body.form.push(data)
 
     bodyKey.value = ""
     bodyValue.value = ""
@@ -201,11 +202,11 @@ function addHeadersKey(evt, hdrsKey) {
     showDropdown(`.${currentTab}headersDropdown`)
 }
 
-function addHeaders(hdrsKey, hdrsValue) {
+function addHeaders(hdrsKey, hdrsValue, r, r_id) {
     if(!hdrsKey.value.length > 0 || !hdrsValue.value.length > 0)
         return
 
-    var id = "headers" + Date.now()
+    var id = r_id ? r_id : "headers" + Date.now()
 
     var hdrsKeyValue = hdrsKey.value
     var hdrsValueValue = hdrsValue.value
@@ -220,11 +221,13 @@ function addHeaders(hdrsKey, hdrsValue) {
     tr.setAttribute("id", id)
     tr.innerHTML = h
 
-    postData[currentTab].headers.push({
-        "id": id,        
-        "key": hdrsKey.value,
-        "value": hdrsValue.value
-    })
+    if (!r) {
+        postData[currentTab].headers.push({
+            "id": id,
+            "key": hdrsKey.value,
+            "value": hdrsValue.value
+        })        
+    }
 
     hdrsKey.value = ""
     hdrsValue.value = ""
@@ -242,11 +245,11 @@ function delHeaders(id) {
     window[`${currentTab}headersTr`].removeChild(window[id])
 }
 
-function addParams(paramsKey, paramsValue) {
+function addParams(paramsKey, paramsValue, r, r_id) {
     if(!paramsKey.value.length > 0 || !paramsValue.value.length > 0)
         return
 
-    var id = "params" + Date.now()
+    var id = r_id ? r_id : "params" + Date.now()
 
     var h = `
             <td><input type="checkbox" checked=true onchange="return toggleOpt(event, '${id}', 'params', '${paramsKey.value}', '${paramsValue.value}')" /></td>
@@ -258,11 +261,13 @@ function addParams(paramsKey, paramsValue) {
     tr.setAttribute("id", id)
     tr.innerHTML = h
 
-    postData[currentTab].params.push({
-        "id": id,
-        "key": paramsKey.value,
-        "value": paramsValue.value
-    })
+    if (!r) {
+        postData[currentTab].params.push({
+            "id": id,
+            "key": paramsKey.value,
+            "value": paramsValue.value
+        })            
+    }
 
     paramsKey.value = ""
     paramsValue.value = ""
@@ -362,6 +367,8 @@ function processResponse(res, tabId, event) {
             downloadResponse(data, res)
         }
         var api = setPostlyAPI(res)
+        setResponseToPostData(res)
+
         runTests(res, tabId, event, api)
         runVisualizer(res, tabId, api)
 
@@ -391,6 +398,8 @@ function processResponseError(e, tabId, event) {
 
     setDisplay(e.response, e, true)
     var api = setPostlyAPI(e)
+    setResponseToPostData(e)
+
     runTests(e, tabId, event, api)
  }
 
@@ -688,4 +697,28 @@ function downloadResponse(data, res) {
             }
             aNode.click()
         }
+}
+
+function setResponseToPostData(res) {
+    var currTab = getCurrTab()
+    currTab.response = {}
+    
+    var data = res.data
+    var headers = res.headers
+    var status = res.status
+    var statusText = res.statusText
+
+    // set config
+    // currTab.response.config = res.config
+
+    currTab.response.data = data
+
+    // set statusText
+    currTab.response.statusText = statusText
+
+    // set status
+    currTab.response.status = status
+
+    // Set response headers
+    currTab.response.headers = headers
 }

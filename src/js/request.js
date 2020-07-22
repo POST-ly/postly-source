@@ -377,7 +377,7 @@ function createNewReqTab(evt, tabId, data) {
                 data.body.form.forEach(function(bdy) {
                     window[`${tabId}bodyKey`].value = bdy.key
                     window[`${tabId}bodyValue`].value = bdy.value
-                    addBody(window[`${tabId}bodyKey`], window[`${tabId}bodyValue`])
+                    addBody(window[`${tabId}bodyKey`], window[`${tabId}bodyValue`], true, bdy.id)
                 });
             }         
 
@@ -385,14 +385,14 @@ function createNewReqTab(evt, tabId, data) {
             data.headers.forEach(function(header) {
                 window[`${tabId}headersKey`].value = header.key
                 window[`${tabId}headersValue`].value = header.value
-                addHeaders(window[`${tabId}headersKey`], window[`${tabId}headersValue`])
+                addHeaders(window[`${tabId}headersKey`], window[`${tabId}headersValue`], true, header.id)
             });
 
             // add params
-            data.params.forEach(function(bdy) {
-                window[`${tabId}paramsKey`].value = bdy.key
-                window[`${tabId}paramsValue`].value = bdy.value
-                addParams(window[`${tabId}paramsKey`], window[`${tabId}paramsValue`])
+            data.params.forEach(function(_param) {
+                window[`${tabId}paramsKey`].value = _param.key
+                window[`${tabId}paramsValue`].value = _param.value
+                addParams(window[`${tabId}paramsKey`], window[`${tabId}paramsValue`], true, _param.id)
             });            
         }
 }
@@ -416,6 +416,11 @@ function setResponseTab(event, tabId, what) {
         .classList.add("tab-content-active")
 }
 
+/**
+ * Fired from "Save" button in the request builder.
+ * @param {*} tabId 
+ * @param {*} openModal 
+ */
 function saveRequest(tabId, openModal) {
     if(openModal)
         attachSaveModal()
@@ -499,6 +504,10 @@ function saveRequest(tabId, openModal) {
     }
 }
 
+/**
+ * Fired from "Save As" option in the request builder.
+ * @param {*} evt 
+ */
 function saveRequestUrlName(evt) {
     var tabId = currentTab
     var requestName = requestUrlName.value

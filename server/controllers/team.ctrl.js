@@ -1,4 +1,6 @@
 /** */
+const mongoose = require("mongoose")
+
 const Team = require('./../models/Team')
 const Collection = require("./../models/Collection")
 const Request = require("./../models/Request")
@@ -7,38 +9,40 @@ const log = console.log
 
 module.exports = {
     getTeamById: (req, res, next) => {
-        Team.getTeamById(req.params.id, (err, team) => {
-            if (err)
-                res.send(err)
-            else if (!team)
-                res.send(404)
-            else
-                res.send(team)
-            next()
-        })        
+        res.send("NOT YET IMPL.")
+        next()
     },
     getTeams: (req, res, next) => {
-        Team.getTeams((err, teams) => {
-            if (err)
+        Team.find((err, teams) => {
+            if (err) {
                 res.send(err)
-            else if (!teams)
-                res.send(404)
-            else
-                res.send(teams)
-            next()            
+                next()
+            }
+            res.send(teams)
+            next()
         })
     },
     getTeamsByUserId: (req, res, next) => {
     },
+
     createTeam: (req, res, next) => {
-        /*
         const {
-            userId,
             teamName
         } = req.body
-        */
-        var newTeam = Team.create(req.body)
-        res.send(newTeam)
+
+        if (!req.user)
+            res.send("You must be signed to create a Team.")
+        else {
+            var newTeam = Team.create({
+                name: teamName,
+                users: [{
+                    role: "owner",
+                    id: mongoose.Types.ObjectId(req.user.id)
+                } ]
+            })
+            res.send(newTeam)
+        }
+        next()
     },
 
     addUserToTeam: (req, res, next) => {

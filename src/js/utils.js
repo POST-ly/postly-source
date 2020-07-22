@@ -33,7 +33,7 @@ function displayNotif(message, opts) {
     var timeout = setTimeout(() => {
         document.body.removeChild(p)
         delete displayNotif.currentNotif
-    }, 1500)
+    }, 5000)
     displayNotif.currentNotif = { timeout, node: p }
 }
 
@@ -251,6 +251,39 @@ function copyCodeSnippet(evt) {
 // TODO: Complete below
 function setCurrentTabEditor(c) {
     currentEditors[c] = {}
+}
+
+function handleIdbError(err) {
+    if ((err.name === "QuotaExceedeError") || err.inner && err.inner.name === "QuotaExceededError") {
+        displayNotif("The storage quota for the current origin was exceeded.", { type: "danger" })
+    } else if (err.name !== "ConstraintError") {
+        // Any other error
+        // displayNotif(err.toString(), { type: "danger" })        
+    }
+}
+
+function setPostlyAPI(res) {
+    var _postly = {}
+    var data = res.data
+    var headers = res.headers
+    var status = res.status
+    var statusText = res.statusText
+
+    // set postly data
+    _postly.config = res
+
+    _postly.response = data
+
+    // set postly responseCodeText
+    _postly.responseCodeText = statusText
+
+    // set postly responseCode
+    _postly.responseCode = status
+
+    // Set response headers to postly
+    _postly.headers = headers
+
+    return _postly
 }
 
 /**

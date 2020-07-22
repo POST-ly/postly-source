@@ -11,7 +11,8 @@ function addCollection(data, cb) {
         return postly.collectionsDb.collections.get(data.collectionId)
     }).then(function(returnedCollection) {
         return cb(true, returnedCollection)
-    }).catch(function(err) {
+    }).catch(function (err) {
+        handleIdbError(err)
         return cb(false, err)
     })
 }
@@ -23,6 +24,9 @@ function getAllCollection(cb) {
         collections.push(collection)
     }).then(function () {
         cb(collections)        
+    }).catch(err => {
+        log(err)
+        // handleIdbError(err)
     })
     // log("Exiting:", collections)
 }
@@ -40,6 +44,7 @@ function updateCollection(data, cb) {
     postly.collectionsDb.collections.put(data).then(function(res) {
         return cb(true, res)
     }).catch(function(err) {
+        handleIdbError(err)
         return cb(false, err)
     })
 }
@@ -48,6 +53,7 @@ function deleteCollectionDb(data, cb) {
     postly.collectionsDb.collections.delete(data.collectionId).then(function(res) {
         return cb(true, res)
     }).catch(function(err) {
+        handleIdbError(err)
         return cb(false, err)
     })
 }

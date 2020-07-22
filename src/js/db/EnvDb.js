@@ -13,6 +13,7 @@ function addEnvIdb(data, cb) {
     }).then(function(returnedEnv) {
         return cb(true, returnedEnv)
     }).catch(function(err) {
+        handleIdbError(err)
         return cb(false, err)
     })
 }
@@ -33,9 +34,11 @@ function deleteEnvIdb(EnvId, cb) {
             postly.EnvDb.Env.delete(Env).then(function(res) {
                 return cb(true, res)
             }).catch(function(err) {
+                handleIdbError(err)
                 return cb(false, err)
             })
         }
+        handleIdbError("Env not found.")
         return cb(false, "Env not found.")
     })
 }
@@ -44,6 +47,7 @@ function updateEnvIdb(data, cb) {
     postly.EnvDb.Env.put(data).then(function(res) {
         return cb(true, res)
     }).catch(function(err) {
+        handleIdbError(err)
         return cb(false, err)
     })
 }

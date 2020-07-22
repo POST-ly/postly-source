@@ -1,11 +1,13 @@
 function createAuthTabs(tabId, type) {
  return `
     <div class="authTabCnt">
-        <div class="tabs">
-            <ul class="tabul flex-wrap responseViews">
+        <div class="tabs" style="border-bottom: unset;">
+            <ul style="border-bottom: unset;" class="tabul flex-wrap responseViews">
                 <li data-tab="${tabId}AuthTab:apiKey" data-name="apikey" style="display: flex;align-items: center;" class="tab ${tabId}AuthTab tab-active"><a>API(Key)</a></li>
                 <li data-tab="${tabId}AuthTab:basic" data-name="basic" style="display: flex;align-items: center;" class="tab ${tabId}AuthTab"><a>Basic</a></li>
+                <!--
                 <li data-tab="${tabId}AuthTab:digest" data-name="digest" style="display: flex;align-items: center;" class="tab ${tabId}AuthTab"><a>Digest</a></li>
+                -->
                 <li data-tab="${tabId}AuthTab:bearer" data-name="bearer" style="display: flex;align-items: center;" class="tab ${tabId}AuthTab"><a>Bearer</a></li>
                 <!--
                 <li class="tab ${tabId}AuthTab"><a>Hawk</a></li>
@@ -48,6 +50,7 @@ function createAuthTabs(tabId, type) {
                     </div>
                 </div> 
 
+                <!--
                 <div data-tab="${tabId}AuthTab:digest" data-name="digest" class="tab-content ${tabId}AuthTab Digest">
                     <div style="margin: 9px 0;">
                         <input type="text" id="${tabId}authDigestUsername" placeholder="Username" />
@@ -55,7 +58,7 @@ function createAuthTabs(tabId, type) {
                     <div style="margin: 9px 0;">
                         <input type="text" id="${tabId}authDigestPassword" placeholder="Password" />
                     </div>
-                    <!--
+                    
                     <div style="margin: 9px 0;">
                         <button style="position: relative;" onclick="return showDropdown('.${tabId}authDigestAlgortihmDropdown')" class="bg-default color-white pad-6 pad-left-12 pad-right-12">
                             <span>Algorithm: <span id="${tabId}authDigestAlgorithm">MD5</span> <span class="icon-arrow-down"></span></span>
@@ -66,7 +69,7 @@ function createAuthTabs(tabId, type) {
                                 </ul>
                             </div>                            
                         </button>
-                    </div>-->
+                    </div>
                     <div style="margin: 9px 0;">
                         <input type="text" id="${tabId}authDigestRealm" placeholder="Realm" />
                     </div>
@@ -92,6 +95,7 @@ function createAuthTabs(tabId, type) {
                         <button onclick="return setAsAuth(event, 'Digest', '${tabId}', '${type}')" class="bg-default color-white pad-6 pad-left-12 pad-right-12">Set As Auth.</button>
                     </div>
                 </div> 
+                -->
 
                 <div data-tab="${tabId}AuthTab:bearer" data-name="bearer" class="tab-content ${tabId}AuthTab Bearer">
                     <div style="margin: 9px 0;">

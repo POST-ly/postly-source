@@ -1,3 +1,7 @@
+const jwt = require("jsonwebtoken")
+
+const User = require('./../models/User')
+
 const log = console.log
 
 // get the user info from a JWT
@@ -8,7 +12,7 @@ const getUser = token => {
             return jwt.verify(token, "nnamdi"/*process.env.JWT_SECRET*/);
         } catch (err) {
             // if there's a problem with the token, throw an error
-            throw new Error('Session invalid');
+            return { error: true, msg: 'Session invalid' }
         }
     }
 };
@@ -18,7 +22,15 @@ function jwtAuth(req, res, next) {
     if (req.headers) {
         if (req.headers.authorization) {
             var auth = req.headers.authorization
-            log(auth)
+
+            var parts = auth.split(" ")
+            var bearer = parts[0]
+            var token = parts[1]
+            log()
+            if (bearer == "Bearer") {
+                req.user = getUser(token)
+            }
+            log(token, req.user)
         }
     }
     next()

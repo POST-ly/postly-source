@@ -12,6 +12,7 @@ function addRequest(data, cb) {
     }).then(function(returnedRequest) {
         return cb(true, returnedRequest)
     }).catch(function(err) {
+        handleIdbError(err)
         return cb(false, err)
     })
 }
@@ -48,6 +49,7 @@ function updateRequest(data, cb) {
     postly.requestsDb.requests.put(data).then(function(res) {
         return cb(true, res)
     }).catch(function(err) {
+        handleIdbError(err)
         return cb(false, err)
     })
 }
@@ -56,6 +58,7 @@ function deleteRequest(data, cb) {
     postly.requestsDb.requests.delete(data).then(function(res) {
         return cb(true, res)
     }).catch(function(err) {
+        handleIdbError(err)
         return cb(false, err)
     })
 }

@@ -258,12 +258,16 @@ function createNewTab(tabId) {
                                     <div class="tab-content ${tabId}responseTabContent tab-content-active Body">
                                         <!--Response Body-->
 
-                                        <div class="tabs">
-                                            <ul class="tabul responseViews">
+                                        <div class="tabs" style="display: flex;align-items: center; border-bottom: unset;">
+                                            <ul class="tabul responseViews" style=" border-bottom: unset;">
                                                 <li class="${tabId}response tab tab-active" data-tab="${tabId}response:prettier"><a onclick="return refreshDisplay('Prettier')">Prettier</a></li>
                                                 <li class="${tabId}response tab" data-tab="${tabId}response:raw"><a onclick="return refreshDisplay('Raw')">Raw</a></li>
                                                 <li class="${tabId}response tab" data-tab="${tabId}response:preview"><a >Preview</a></li>
                                                 <li class="${tabId}response tab" data-tab="${tabId}response:visualizerpreview"><a >Visualizer(Preview)</a></li>
+                                            </ul>
+                                            <ul class="tabul" style="margin-left: 2px; border-bottom: unset;">
+                                                <li class="tab"><a onclick="return copyResponse(event, '${tabId}')" class="icon-docs" title="Copy response to Clipboard."></a></li>
+                                                <li class="tab"><a onclick="return downloadResponseBtn(event, '${tabId}')" class="icon-cloud-download" title="Download response."></a></li>
                                             </ul>
                                         </div>
                                         <div>
@@ -305,4 +309,30 @@ function createNewTab(tabId) {
 function toggleSideView(event, tabId) {
     var node = getFromWindow(`${tabId}ViewMode`)
     node.classList.toggle("ViewModeTwoSideCol")
+}
+
+function copyResponse(evt, tabId) {
+    var resEditor = getCodeEditor(tabId, `${tabId}responsePrettierDisplay`)
+    navigator.clipboard.writeText(resEditor.getValue()).then(text => {
+        displayNotif("Copied!!", {type: "success"})
+    }).catch(err => {
+        displayNotif("Error occured while attempting to copy the response", { type: "danger" })
+    })
+}
+
+function downloadResponseBtn(evt, tabId) {
+    var resEditor = getCodeEditor(tabId, `${tabId}responsePrettierDisplay`)
+    if (resEditor) {
+        var data = resEditor.getValue()
+        /*
+        var currTab = getCurrTab()
+        var res = currTab.response || false
+        var type = res.headers["content-type"] || undefined
+        */
+
+        var aNode = document.createElement("a")
+        aNode.href = URL.createObjectURL(new Blob([data], { type: "text/plain" }))
+        aNode.download = Date.now() + "response.txt"
+        aNode.click()
+    }
 }

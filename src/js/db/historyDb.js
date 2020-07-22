@@ -12,6 +12,7 @@ function addHistory(data) {
     }).then(function(returnedHistory) {
         return cb(true, returnedHistory)
     }).catch(function(err) {
+        handleIdbError(err)
         return cb(false, err)
     })
 }
@@ -44,6 +45,7 @@ function updateHistory(data, cb) {
     postly.historyDb.history.put(data).then(function(res) {
         return cb(true, res)
     }).catch(function(err) {
+        handleIdbError(err)
         return cb(false, err)
     })
 }
@@ -78,6 +80,7 @@ function deleteAllHistory(cb) {
     postly.historyDb.history.clear().then(function(res) {
         return cb(true, res)
     }).catch(function(err) {
+        handleIdbError(err)
         return cb(false, err)
     })
 }
