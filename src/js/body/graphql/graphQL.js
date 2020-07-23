@@ -1,6 +1,4 @@
-function graphQLTab() {
-
-}
+function graphQLTab() {}
 
 function createGraphQLDisplay(tabId) {
     return `
@@ -81,7 +79,7 @@ function getGraphQLEditorValue(forSave) {
     }
     if(!forSave) {
         // set appropriate headers
-        postData[currentTab].headers.push({key: "content-type", value: "application/json"})
+        // postData[currentTab].headers.push({key: "content-type", value: "application/json"})
     }
     return {
         query,

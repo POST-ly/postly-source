@@ -84,3 +84,52 @@ function setBodyForSave() {
             break;
     }
 }
+
+function setHeadersBodyType(headers, postDatabody) {
+    var mode = postDataBody.mode
+    // postData[currentTab].headers.push({ key: "content-type", value: valType })
+
+    switch (mode) {
+        case "form":
+            headers["content-type"] = "multipart/form-data"
+            break;
+        case "graphql":
+            headers["content-type"] = "application/json"
+            break;
+        case "raw":
+            var lang = postDatabody["raw"].lang
+            setHeadersRawMode(headers, lang)
+            break;
+        default:
+            break;
+    }
+
+}
+
+function setHeadersRawMode(headers, lang) {
+    var valType
+    switch (lang) {
+        case "json":
+            // set appropriate headers
+            valType = "application/json"
+            break;
+        case "text":
+            // set appropriate headers
+            valType = "text/plain"
+            break;
+        case "xml":
+            // set appropriate headers
+            valType = "text/xml"
+            break;
+        case "javascript":
+            // set appropriate headers
+            valType = "application/javascript"
+            break;
+        case "html":
+            // set appropriate headers
+            valType = "text/html"
+        default:
+            break;
+    }
+    headers["content-type"] = valType
+}

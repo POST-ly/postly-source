@@ -108,7 +108,7 @@ function getRawEditorValue(forSave) {
             break;
     }
     if(!forSave)
-        postData[currentTab].headers.push({ key: "content-type", value: valType })
+        // postData[currentTab].headers.push({ key: "content-type", value: valType })
 
     if(forSave)
         return { content: value, lang: lang }

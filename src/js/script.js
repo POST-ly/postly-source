@@ -34,6 +34,9 @@ function send(event, tabId) {
                 headers[parseVarsAndReplace(header.key)] = parseVarsAndReplace(header.value)
             })
         }
+
+        // set headers for bdy type.
+        setHeadersBodyType(headers, postData[tabId].body)
     } catch(e) {}
 
     try {
