@@ -12,6 +12,7 @@ module.exports = {
         res.send("NOT YET IMPL.")
         next()
     },
+
     getTeams: (req, res, next) => {
         Team.find((err, teams) => {
             if (err) {
@@ -47,14 +48,16 @@ module.exports = {
 
     addUserToTeam: (req, res, next) => {
         // TODO: check if the user adding the user has privs.
-        /*
+        
         const {
             userIdToAdd,
             roleOfUserToAdd,
-            userId,
             teamId
         } = req.body
-        */
+        
+        if (!req.user) 
+            res.send("You must be signed in to perfomr this operation.")
+        Team.findById()
         
     },
 
