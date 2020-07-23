@@ -251,6 +251,9 @@ function createNewTab(tabId) {
                                             <span style="margin: 0 2px;white-space: nowrap;" class="<!--bg-green--> color-white bd-rad-3 pad-3 ${tabId}responseStatus close"></span>
                                             <span style="white-space: nowrap;" class="<!--bg-green--> color-white bd-rad-3 pad-3 ${tabId}responseStatusText close"></span>
                                         </div>
+                                        <div class="float-right" style="display: flex;text-align: center;align-items: center;">Time: 
+                                            <span style="white-space: nowrap;" class="bd-rad-3 pad-3 ${tabId}responseTime close"></span>
+                                        </div>
                                     </li>
                                 </ul>
                             </div>

@@ -55,7 +55,7 @@ function updateRequest(data, cb) {
 }
 
 function deleteRequest(data, cb) {
-    postly.requestsDb.requests.delete(data).then(function(res) {
+    postly.requestsDb.requests.delete(data.requestId).then(function(res) {
         return cb(true, res)
     }).catch(function(err) {
         handleIdbError(err)

@@ -85,7 +85,7 @@ function setBodyForSave() {
     }
 }
 
-function setHeadersBodyType(headers, postDatabody) {
+function setHeadersBodyType(headers, postDataBody) {
     var mode = postDataBody.mode
     // postData[currentTab].headers.push({ key: "content-type", value: valType })
 

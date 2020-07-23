@@ -286,9 +286,16 @@ function addReqCollection(event) {
             //log("addReqCollection:", done, res)
             // request exits
             if(done) {
-                updateRequest(postData[currentTab], () => {})
+                updateRequest(postData[currentTab], (doneReq, resUpdateReq) => {
+                    if (doneReq) {
+                        closeActiveModals()                        
+                    }
+                })
             } else {
                 addRequest(postData[currentTab], (doneReq, resReq) => {
+                    if (doneReq) {
+                        closeActiveModals()                        
+                    }
                     //log("addRequest:", doneReq, resReq, postData[currentTab])
                 })
             }
@@ -361,7 +368,9 @@ function removeReqFromCollection(tabId) {
     // log("Remove from collection")
     if(confirm("Do you really want to remove this request?")) {
         if(checkTeamIsPersonal()) {
-            deleteRequest(postData[currentTab], (done, res) => {})
+            deleteRequest(postData[currentTab], (done, res) => {
+
+            })
         } else {
             // network
         }
@@ -459,11 +468,11 @@ function deleteCollection(colId) {
             deleteCollectionDb({
                 collectionId: colId
             }, (done, res) => {
-                getRequestsbyColId(colId, (done, res) => {
+                getRequestsbyColId(colId, (_done, reqs) => {
                     if(done) {
-                        if(reqs)
+                        if(_done && reqs)
                             reqs.forEach(req => {
-                                deleteRequest(req, (done, r) => {
+                                deleteRequest(req, (d, r) => {
                                     refreshCollections()
                                 })
                             })

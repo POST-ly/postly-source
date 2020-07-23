@@ -258,7 +258,7 @@ function handleIdbError(err) {
         displayNotif("The storage quota for the current origin was exceeded.", { type: "danger" })
     } else if (err.name !== "ConstraintError") {
         // Any other error
-        displayNotif(err.toString(), { type: "danger" })        
+        // displayNotif(err.toString(), { type: "danger" })        
     }
 }
 

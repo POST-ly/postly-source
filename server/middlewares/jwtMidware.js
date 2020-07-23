@@ -18,7 +18,7 @@ const getUser = token => {
 };
 
 function jwtAuth(req, res, next) {
-    log("jwtauth midware")
+    // log("jwtauth midware")
     if (req.headers) {
         if (req.headers.authorization) {
             var auth = req.headers.authorization

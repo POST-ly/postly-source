@@ -569,21 +569,20 @@ function saveRequestUrlName(evt) {
 
         })
     } else {
-        updateRequest(postData[currentTab], (done, res) => {
-            log(done, res)
-            if(done) {
-                
-            }
+        updateRequest(postData[currentTab], (doneReqUpdate, res) => {
+            log(doneReqUpdate, res)
             // reset the modal    
             evt.target.innerText = "Save"
             evt.target.removeAttribute("disabled")
-
-            modalRequestError.innerHTML = ""
-            modalRequestError.classList.add("close")
-            requestUrlName.value = ""
-            refreshCollections()
-            window[`${currentTab}TabName`].innerHTML = requestName
-            window[`${currentTab}TabMethod`].innerHTML = postData[currentTab].methodType
+            if (doneReqUpdate) {
+                modalRequestError.innerHTML = ""
+                modalRequestError.classList.add("close")
+                requestUrlName.value = ""
+                refreshCollections()
+                window[`${currentTab}TabName`].innerHTML = requestName
+                window[`${currentTab}TabMethod`].innerHTML = postData[currentTab].methodType
+                closeActiveModals()
+            }
         })
     }
 

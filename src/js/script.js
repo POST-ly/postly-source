@@ -111,6 +111,8 @@ function send(event, tabId) {
         }
     }
 
+    var now = Date.now()
+
     axiosInst({
         method: METHOD.toLowerCase(),
         url: url,
@@ -118,7 +120,8 @@ function send(event, tabId) {
         headers,
         maxRedirects: getFromWindow(`${tabId}maxRedirects`).value || 0,
         withCredentials: postData.withcredentials || false
-    }).then( res => {
+    }).then(res => {
+        setTimeResponse(tabId, now, Date.now())
         processResponse(res, tabId, event)
     }).catch(e => {
         // process error response
@@ -345,6 +348,13 @@ function setResponseStatusText(statusText, tabId) {
         statusNode.classList.add("bg-default")
         statusNode.classList.remove("close")
     }
+}
+
+function setTimeResponse(tabId, startTime, endTime) {
+    var timeNode = document.querySelector(`.${tabId}responseTime`)
+    timeNode.classList.remove("close")
+    timeNode.classList.add("color-default")
+    timeNode.innerText = Math.ceil((endTime - startTime) / 3600) + "s"
 }
 
 function processResponse(res, tabId, event) {
