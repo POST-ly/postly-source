@@ -218,7 +218,7 @@ function createNewTab(tabId) {
                                                     </div>
                                                     <div style="padding: 10px 0;border-bottom: 1px solid rgb(221, 221, 221);">
                                                         <p style="margin: 9px 0;font-size: 15px;color:rgb(101, 101, 101);"><span style="padding-right: 2px;" class="icon-question"></span>
-                                                            <strong>Max Redirects</strong> defines the maximum number of redirects to follow in node.js. If set to 0, no redirects will be followed.
+                                                            <strong>Max Redirects</strong> defines the maximum number of redirects to follow. If set to 0, no redirects will be followed.
                                                         </p>
                                                         <div style="margin: 4px 0;">Max Redirects:</div>
                                                         <input id="${tabId}maxRedirects" type="text" />

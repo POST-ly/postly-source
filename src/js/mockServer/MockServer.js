@@ -195,11 +195,40 @@ function createMockServer(event) {
         })
     } else {
         // TODO: Add network implementation.
+        axios.post(url + "mockServers", {
+            name: mockServerName,
+            endPoints: endPoints
+        }).then(res => {
+            displayNotif("Successfully created a Mock Server", { type: "success" })
+
+            document.querySelector(`.${currentTab}listToAddMockServers`).innerHTML = ""
+            getFromWindow(`${currentTab}mockServerName`).value = ""
+
+            var methType = getFromWindow(`${currentTab}MockServerMethodType`)
+            methType.innerText = "GET"
+            methType.dataset.value = "get"
+
+            getFromWindow(`${currentTab}mockServerUrlName`).value = ""
+            getFromWindow(`${currentTab}mockServerResponseCode`).value = ""
+            getFromWindow(`${currentTab}mockServerResponse`).value = ""
+            addToMockServerList.addedMocks = []
+
+            buttonNode.removeAttribute("disabled", null)
+            buttonNode.innerText = "Create"
+        }).catch(err => {
+            displayNotif("Error occured while creating a Mock Server", {type: "danger"})
+            buttonNode.removeAttribute("disabled", null)
+            buttonNode.innerText = "Create"
+        })
     }
 }
 
 function getAllMockServers() {
-    getMockServersIdb()
+    if (checkTeamIsPersonal()) {
+        getMockServersIdb()        
+    } else {
+        getMockServersNetwork()
+    }
 }
 
 function setMockServerMethodType(key, value) {

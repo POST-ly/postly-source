@@ -405,6 +405,10 @@ function createNewReqTab(evt, tabId, data) {
                 window[`${tabId}paramsValue`].value = _param.value
                 addParams(window[`${tabId}paramsKey`], window[`${tabId}paramsValue`], true, _param.id)
             });            
+
+            if(data.response) {
+                setReqResponse(data.response, tabId)
+            }
         }
 }
 
@@ -471,18 +475,18 @@ function saveRequest(tabId, openModal) {
         } else {
             if(!checkTeamIsPersonal()) {
                 // edit request on server
-                axios.post(url + "").then(res => {
-
+                axios.post(url + "collection/update/request", getCurrTab()).then(res => {
+                    refreshCollections()
                 })
             } else {
+                setReqColId()
                 updateRequest(postData[currentTab], (done, res) => {
                     log("saveRequest:",done, res)
                     if(done) {
-                        
+                        refreshCollections()                        
                     }
                 })
             }
-            refreshCollections()
         }
         getHistory(currentTab, (found, data) => {
             if(found == false) {
@@ -565,10 +569,20 @@ function saveRequestUrlName(evt) {
 
     if(!checkTeamIsPersonal()) {
         // edit request on server
-        axios.post(url + "").then(res => {
-
-        })
+        axios.post(url + "/collection/update/request", getCurrTab())
+            .then(res => {
+                evt.target.innerText = "Save"
+                evt.target.removeAttribute("disabled")
+                modalRequestError.innerHTML = ""
+                modalRequestError.classList.add("close")
+                requestUrlName.value = ""
+                refreshCollections()
+                window[`${currentTab}TabName`].innerHTML = requestName
+                window[`${currentTab}TabMethod`].innerHTML = postData[currentTab].methodType
+                closeActiveModals()
+            })
     } else {
+        setReqColId()
         updateRequest(postData[currentTab], (doneReqUpdate, res) => {
             log(doneReqUpdate, res)
             // reset the modal    
@@ -619,10 +633,6 @@ function saveRequestUrlName(evt) {
 }
 
 function collectAllRequestData(tabId) {
-    if(!postData[currentTab].requestId) {
-        postData[currentTab].requestId = "requestId" + Date.now()
-    }
-
     // TODO: gather all the tests and pre-request scripts.
 
     postData[currentTab]["teamId"] = currentTeam.id
@@ -645,19 +655,27 @@ function collectAllRequestData(tabId) {
         postData[tabId].visualizer = visualizerEditor.getValue()
     }
 
-    if(!postData[currentTab].requestId) {
-        postData[currentTab].requestId = "requestId" + Date.now()
-    }
-
     if(selectedColId) {
         postData[currentTab]["collectionId"] = selectedColId
     }
-
     setBodyForSave()
 }
 
+function setReqColId() {
+    if (!postData[currentTab].requestId) {
+        postData[currentTab].requestId = "requestId" + Date.now()
+    }
+}
+
 function setRequestAuth(auth, tabId) {
+    // set .${tabId}AuthTab.tab
     var authName = auth.type
+
+    /*
+    document.querySelectorAll(`.${tabId}AuthTab.tab`)
+    .dataset.tab = authName
+    */
+
     switch (authName) {
         case 'Basic':
             getFromWindow(`${tabId}authBasicUsername`).value = auth.username
@@ -685,9 +703,12 @@ function setRequestAuth(auth, tabId) {
         default:
             break;
     }
+
+    authName = `${tabId}AuthTab:` + authName.toLowerCase()
+
     // remove the active tab and tab-content
-    document.querySelector(`.${tabId}AuthTab.tab-active`).classList.remove(".tab-active")
-    document.querySelector(`.${tabId}AuthTab.tab-content-active`).classList.remove(".tab-content-active")
+    document.querySelector(`.${tabId}AuthTab.tab-active`).classList.remove("tab-active")
+    document.querySelector(`.${tabId}AuthTab.tab-content-active`).classList.remove("tab-content-active")
 
     // data-tab="${tabId}AuthTab:apiKey"
     document.querySelectorAll(`.${tabId}AuthTab.tab`).forEach(n => {
@@ -695,6 +716,7 @@ function setRequestAuth(auth, tabId) {
             n.classList.add("tab-active")
         }
     })
+
     document.querySelectorAll(`.${tabId}AuthTab.tab-content`).forEach(n => {
         if (n.dataset.tab.toLowerCase() == authName.toLowerCase()) {
             n.classList.add("tab-content-active")
@@ -709,4 +731,33 @@ function setRequestAuth(auth, tabId) {
     // set this 
     document.querySelector(`.${tabId}AuthTab.tab-active`)
         .innerHTML += `<span class="${tabId}AuthTabCheck icon-check" style="padding-right: 8px; color: rgb(221,75,57); font-weight: 800;" class="icon-check"></span>`
+}
+
+function setReqResponse(res, tabId) {
+    try {
+        // set response headers
+        setResponseHeaders(res.headers, tabId)
+
+        // set response status
+        setResponseStatus(res.status, tabId)
+
+        // set response status text
+        setResponseStatusText(res.statusText, tabId)
+
+        var data = res.data
+
+        setDisplay(data, res, false)
+
+        if (res.time) {
+            setTimeResponse(res.time.startTime, res.time.endTime)            
+        }
+
+        /*
+        runTests(res, tabId, event, api)
+        runVisualizer(res, tabId, api)
+        */
+
+    } catch (error) {
+        setDisplay(error.toString(), error, true)
+    }
 }

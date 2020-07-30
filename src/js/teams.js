@@ -97,18 +97,49 @@ function addToTeam(event) {
 // This will fetch all the teams the user belongs to
 function loadTeams() {
     var htmlStr = `
-        <li><a onclick="return selectTeam('personal')">Personal</a></li>
+        <li><a onclick="return selectTeam('personal', 'Personal')">Personal</a></li>
     `
-    axios.get(url + "teams/" + user.id).then((res) => {
+    // load teams
+    axios.get(url + "teams/user").then((res) => {
         var _teams = res.data
         teams = _teams
         _teams.forEach(function(team) {
-            htmlStr += `<li><a onclick="return selectTeam('${team.id}')">${team.name}</a></li>`
+            htmlStr += `<li><a onclick="return selectTeam('${team.teamId}', '${team.name}')">${team.name}</a></li>`
         });
         teamsList.innerHTML = htmlStr
     }).catch(e => {
+        displayNotif("Error occured while loading your teams.", {type: "danger"})
         log(e)
     })
 }
 
+function loadATeam(currTeam) {
+    var teamId = currTeam.id
+    var teamName = currTeam.name
 
+    // load team, collections, requests, envs, mockserver
+
+    if (teamId == "personal") {
+        getFromWindow("currentTeamDisplay").innerText = teamName
+    } else {
+        /*
+        axios.get(url + '/team/user/' + teamId).then((res) => {
+            var _team = res.data
+            // set team name in DOM        
+            // id = "currentTeamDisplay"
+            if (_team) {
+                getFromWindow("currentTeamDisplay").innerText = _team.name
+        }
+        }).catch(e => {
+            displayNotif("Error occured while loading your team.", { type: "danger" })
+            log(e)
+        })        
+        */
+    }
+}
+
+function selectTeam(teamId, teamName) {
+    localStorage.setItem("currentTeam", JSON.stringify({ id: teamId, name: teamName }))
+    getFromWindow("currentTeamDisplay").innerText = teamName
+    location.reload()
+}

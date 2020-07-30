@@ -1,9 +1,11 @@
 /** */
 const mongoose = require("mongoose")
 
+const User = require('./../models/User')
 const Team = require('./../models/Team')
 const Collection = require("./../models/Collection")
 const Request = require("./../models/Request")
+const collectionCtrl = require("./collection.ctrl")
 
 const log = console.log
 
@@ -23,7 +25,42 @@ module.exports = {
             next()
         })
     },
+
+    /**
+    * Populate the collections and the requests in the collection.
+     */
+    getTeamsColsReqsByUserId: (req, res, next) => {
+        var teamId = req.params.teamId        
+        if (!req.user)
+            res.send("You must be signed to retrieve your Teams.")
+        else {
+            var user = mongoose.Types.ObjectId(req.user.id)
+            // db.getCollection('teams').find({"users.id": ObjectId("5f189c365649571648725ea3")})
+            Team.findById(user, { "name": 1, "collections": 1 })
+                .populate("collections")
+                .populate("requests")
+                .exec((err, team) => {
+                    log(team)
+                    res.send(team)
+            })
+        }
+    },
+
+    /**
+     * This will load all the teams a user belonged to both
+     * as owner or viewer.
+     */
     getTeamsByUserId: (req, res, next) => {
+        if (!req.user)
+            res.send("You must be signed to retrieve your Teams.")
+        else {
+            var user = mongoose.Types.ObjectId(req.user.id)
+            // db.getCollection('teams').find({"users.id": ObjectId("5f189c365649571648725ea3")})
+            Team.find({ "users.id": user }, { "name": 1, "teamId": 1 })
+                .exec((err, team) => {
+                    res.send(team)
+            })
+        }
     },
 
     createTeam: (req, res, next) => {
@@ -41,6 +78,7 @@ module.exports = {
                     id: mongoose.Types.ObjectId(req.user.id)
                 } ]
             })
+            newTeam.teamId = newTeam._id
             res.send(newTeam)
         }
         next()
@@ -48,51 +86,164 @@ module.exports = {
 
     addUserToTeam: (req, res, next) => {
         // TODO: check if the user adding the user has privs.
-        
+        // TODO: check if the userToAdd is already on the team.
+
         const {
             userIdToAdd,
             roleOfUserToAdd,
             teamId
         } = req.body
-        
-        if (!req.user) 
-            res.send("You must be signed in to perfomr this operation.")
-        Team.findById()
-        
+
+        if (!req.user) {
+            res.send("You must be signed in to perform this operation.")
+            next()
+            return
+        }
+        if (userIdToAdd == undefined || roleOfUserToAdd == undefined || teamId == undefined) {
+            res.send("Error: All fields must be present.")
+            next()
+            return
+        }
+
+        Team.findById(mongoose.Types.ObjectId(teamId), (err, team) => {
+            if (!err) {
+                team.users.push({ role: roleOfUserToAdd, id: userIdToAdd })
+                team.save((e, team) => {
+                    if(!e) {
+                        res.send(team)
+                    } else {
+                        log(e.toString())
+                        res.send("Error occured while adding user to team.")
+                    }
+                })
+            } else {
+                log(err.toString())
+                res.send("Error occurred while adding a user to team.")
+            }
+        })
     },
 
     changeUserRoleOnTeam: (req, res, next) => {
         const {
             userIdToChangeRole,
-            userId,
             teamId,
             roleToChangeTo
         } = req.body
+
+        if (!req.user) {
+            res.send("You must be signed in to perform this operation.")
+            next()
+            return
+        }
+
+        if (userIdToChangeRole == undefined || roleToChangeTo == undefined || teamId == undefined) {
+            res.send("Error: All fields must be present.")
+            next()
+            return
+        }
+
+        Team.findById(mongoose.Types.ObjectId(teamId), (err, team) => {
+            if (!err) {
+
+                var user = team.users.find(user => {
+                    return user.id == userIdToChangeRole
+                })
+
+                if (user) {
+                    user.role = roleToChangeTo
+                    team.save((e, team) => {
+                        if (!e) {
+                            res.send(team)
+                        } else {
+                            log(e.toString())
+                            res.send("Error occured while adding user to team.")
+                        }
+                    })                    
+                }
+
+            } else {
+                log(err.toString())
+                res.send("Error occurred while adding a user to team.")
+            }
+        })
     },
 
     removeUserFromTeam: (req, res, next) => {
         const {
             userIdToRemoveFromTeam,
-            userId,
             teamId
         } = req.body
+
+        if (!req.user) {
+            res.send("You must be signed in to perform this operation.")
+            next()
+            return
+        }
+
+        if (userIdToRemoveFromTeam == undefined || teamId == undefined) {
+            res.send("Error: All fields must be present.")
+            next()
+            return
+        }
+
+        Team.findById(mongoose.Types.ObjectId(teamId), (err, team) => {
+            if (!err) {
+
+                team.users = team.users.filter(user => {
+                    return user.id !== userIdToRemoveFromTeam
+                })
+
+                team.save((e, team) => {
+                    if (!e) {
+                        res.send(team)
+                    } else {
+                        log(e.toString())
+                        res.send("Error occured while adding user to team.")
+                    }
+                })                    
+
+            } else {
+                log(err.toString())
+                res.send("Error occurred while adding a user to team.")
+            }
+        })
     },
 
+    /**
+     * Creates a new collection and adds it to a team
+     */
     addCollectionToTeam: (req, res, next) => {
         const {
             collectionName,
-            userId,
             teamId
         } = req.body
-        Collection.addACollection({
+
+        if (!req.user) {
+            res.send("You must be signed in to perform this operation.")
+            next()
+            return
+        }
+
+        if (collectionName == undefined || teamId == undefined) {
+            res.send("Error: The fields must be complete.")
+            next()
+            return
+        }
+
+        Collection.create({
             name: collectionName,
             teamId
-        }, (err, newCollection) => {
-            if(!err) {
-                res.send({ success: true, msg: "Collection added.", ...newCollection})
-            } else {
-                res.send({ error: true, msg: "Cannot add collection to team."})
-            }
+        }, (err, collection) => {
+                collection.collectionId = collection._id
+                collection.save()
+                Team.findById(mongoose.Types.ObjectId(teamId), (err, team) => {
+                    if (!err) {
+                        team.collections.push(mongoose.Types.ObjectId(collection._id))
+                        team.save()
+                        res.send(collection)
+                        next()
+                    }
+                })
         })
     },
 
@@ -102,24 +253,41 @@ module.exports = {
         const {
             collectionId,
             teamId,
-            userId
         } = req.body
-        Collection.removeCollectionFromTeam({
-            collectionId,
-            teamId,
-            userId
-        }, (err, removedCol) => {
-            if(!err) {
-                Request.removeRequestByCollectionId({
-                    collectionId,
-                    userId
-                }, (err, removedReq) => {
-                    res.send({ success: true, msg: "Collection removed from team." })
+
+        if (!req.user) {
+            res.send("You must be signed in to perform this operation.")
+            next()
+            return
+        }
+
+        if (collectionId == undefined || teamId == undefined) {
+            res.send("Error: The fields must be complete.")
+            next()
+            return
+        }
+
+        Collection.findById(collectionId, (err, col) => {
+            if (!err) {
+                col.remove((err) => {
+                    if (!err) {
+                        Team.findById(teamId, (err, team) => {
+                            if (!err) {
+                                team.collections = team.collections.filter(col => {
+                                    return col.collectionId !== collectionId
+                                })
+                                team.save()
+                                res.send(team)
+                                next()
+                            }
+                        })                        
+                    } else {
+                        res.send(err)
+                    }
                 })
-            } else {
-                res.send("Error occured when remvoing collection")
             }
         })
+
     }
 }
 

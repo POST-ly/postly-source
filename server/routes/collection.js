@@ -2,37 +2,7 @@ const collectionCtrl = require('./../controllers/collection.ctrl')
 
 module.exports = (router) => {
 
-    /**
-     * get all collections
-     */
-    router
-        .route('/teams/:teamId/collections')
-        .get(collectionCtrl.getAllCollections)
-
-    /**
-     * Get a Collection
-     */
-    router
-        .route('/teams/:teamId/collections/:colId')
-        .get(collectionCtrl.getAllCollections)
-
-    /**
-     * Create a collection
-     */
-    router
-        .route('/teams/:teamId/collections')
-        .post(collectionCtrl.getAllCollections)
-
-    /**
-     * Edit a collection
-     */
-    router
-        .route('/teams/:teamId/collections/:colId')
-        .put(collectionCtrl.getAllCollections)
-
-
     // API v1
-
     /**
      * get collections belonging to a team
      */
@@ -41,17 +11,38 @@ module.exports = (router) => {
         .get(collectionCtrl.getCollectionsByTeamId)
 
     /**
-     * add a collection
+     * Edit a collection name
      */
     router
-        .route('/collection/add')
-        .post(collectionCtrl.addACollection)
+        .route('/collections/rename')
+        .post(collectionCtrl.renameCollection)
 
-    /**
+    /** 
+     * Update collection
+    */
+    router
+        .route('/collection/update')
+        .post(collectionCtrl.updateCollection)
+    
+
+     /**
      * add new request to collection
      */
     router
-        .route('/collection/add/request')
+        .route('/collection/add/request/:collectionId')
         .post(collectionCtrl.addNewRequest)
-
+    
+    /**
+     * Update a request
+     */
+    router
+        .route('/collection/update/request')
+        .post(collectionCtrl.updateRequest)
+    
+    /**
+     * Delete a request from a collection
+     */
+    router
+        .route('/collection/delete/request')
+        .post(collectionCtrl.deleteRequest)
 }

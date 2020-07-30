@@ -2,10 +2,10 @@ const log = console.log
 const mongoose = require('mongoose')
 
 let CollectionSchema = new mongoose.Schema({
-    collectionId: Number,
+    collectionId: mongoose.Schema.Types.ObjectId,
     name: String,
-    requests: [ mongoose.Schema.Types.ObjectId ],
-    teamId: mongoose.Schema.Types.ObjectId,
+    requests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }],
+    teamId: { type: mongoose.Schema.Types.ObjectId, ref: "Team" },
     variables: Array,
     tests: String,
     prerequest: String,

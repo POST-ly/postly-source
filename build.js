@@ -16,6 +16,7 @@ var filesToBundle = [
     "./src/js/libs/dexie/dexie.min.js",
 
     "./src/js/utils.js",
+    "./src/js/xhr/xhr.js",
 
     "./src/js/db/historyDb.js",
     "./src/js/db/collectionsDb.js",

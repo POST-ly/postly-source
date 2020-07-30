@@ -8,8 +8,14 @@ module.exports = (router) => {
         .route('/envs')
         .get(envCtrl.getEnvs)
 
-
     /**
+     * Get envs attached to a team
+     */
+    router
+        .route('/envs/team/:teamId')
+        .get(envCtrl.getTeamEnvs)
+
+     /**
      * get a particular env
      */
     router

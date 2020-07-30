@@ -42,9 +42,10 @@
         <link rel="stylesheet" href="./css/teams.css"></link>
         <link rel="stylesheet" href="./css/Env.css"></link>
         <link rel="stylesheet" href="./css/notif.css"></link>
+        <link rel="stylesheet" href="./css/chat.css"></link>
 
 	</head>
-    <body>	
+    <body>
         <header>
             <div class="headerTitle">
                 <span onclick="return showHis(event);" class="mobileSideBar icon-menu"></span>
@@ -100,8 +101,8 @@
                         </div>                        
                     </li>
                     <li><a class="nav-btn" onclick="return aboutModal(event)"><span>About </span><span class="icon-question"></span></a></li>
-                    <!--<li><a class="nav-btn" onclick="return addToTeam(event)"><span>Add </span><span class="icon-people"></span></a></li>
-                    <li><a class="nav-btn" onclick="return signInModal(event)"><span>Sign In </span><span class="icon-user"></span></a></li>-->
+                    <!--<li><a class="nav-btn" onclick="return addToTeam(event)"><span>Add </span><span class="icon-people"></span></a></li>-->
+                    <li id="authButtons"></li>
                 </ul>
             </nav>
         </header>
@@ -152,6 +153,7 @@
             <div class="horiDivider"></div>
             <div class="wrapper">
                 <div style="display: flex; justify-content: flex-end;border-bottom: 1px solid rgb(221, 221, 221);padding-bottom: 2px;">
+                    <span id="teamChatArea" style="padding-right: 2px;"></span>
                     <span style="position: relative; padding-right: 2px;">
                         Envs: 
                         <a onclick="return showDropdown('.envsDropdown')" style="padding: 3px;background: gray;color: white;border-radius: 2px;display: inline-block;white-space: nowrap;"><span id="currentEnvDisplay" data-value="noEnviron">No Environ </span><span class="icon-arrow-down"></span></a>
@@ -207,6 +209,7 @@
 
     <!-- Custom scripts -->
     <script src="./js/utils.js"></script>
+    <script src="./js/xhr/xhr.js"></script>
 
     <script src="./js/db/historyDb.js"></script>
     <script src="./js/db/collectionsDb.js"></script>
@@ -216,6 +219,8 @@
 
     <script src="./js/auth/authTabs.js"></script>
     <script src="./js/codegens/codegens.js"></script>
+
+    <script src="./js/chat/chat.js"></script>
 
     <script src="./js/body/binary/binary.js"></script>
     <script src="./js/body/graphql/graphQL.js"></script>

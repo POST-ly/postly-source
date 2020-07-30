@@ -282,6 +282,14 @@ function updateCollectionn(evt, colId) {
 
     } else {
         // network
+        axios.post(url + "collection/update", col)
+            .then(res => {
+                targ.removeAttribute("disabled", null)
+                targ.innerText = "Update"
+            }).catch(err => {
+                targ.removeAttribute("disabled", null)
+                targ.innerText = "Update"
+            })
     }
 }
 

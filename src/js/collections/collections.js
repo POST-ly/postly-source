@@ -85,7 +85,11 @@ function createCollection(event) {
                 collectionModalRequestError.innerText = res
             } else {
                 document.querySelector(".modal-backdrop.collection-modal-backdrop").dispatchEvent(new Event("click"))
+                closeActiveModals()
+                refreshCollections()
             }
+            btnNode.removeAttribute("disabled")
+            btnNode.innerText = "Create"
         })
     } else {
         axios.post(url + "team/add/collection", {
@@ -94,12 +98,15 @@ function createCollection(event) {
             collectionName: colName
         }).then(res => {
             var r = res.data
+            btnNode.removeAttribute("disabled")
+            btnNode.innerText = "Create"
+            closeActiveModals()
+            refreshCollections()
+        }).catch(err => {
+            btnNode.removeAttribute("disabled")
+            btnNode.innerText = "Create"
         })
     }
-    
-    btnNode.removeAttribute("disabled")
-    btnNode.innerText = "Create"
-    refreshCollections()
 }
 
 function refreshCollections() {
@@ -125,20 +132,62 @@ function refreshCollectionsNetwork() {
         collections = cols
 
         cols.forEach((col) => {
-            var id = "historyCollectionsFolder" + Date.now() + col.id
+            var id = "historyCollectionsFolder" + Date.now() + col.collectionId
+            /*
             var h = `
                 <li class="historyLi ${col.id}Collection" onclick="return historyCollectionsFolderClick(event, '.historyCollectionsFolder.${id}', '${col.id}')">
                     <span class="icon-folder-alt"></span><span> ${col.name}</span>
                     <ul class="historyCollectionsFolder ${id} close">
             `
-            if(col.requests) {
+            */
+            var h = `
+                <li class="historyLi collectionFolder ${col.collectionId}Collection">
+                    <div style="display: flex;width: 100%;">
+                        <div style="width: 100%; display: flex; align-items: flex-start;" onclick="return historyCollectionsFolderClick(event, '.historyCollectionsFolder.${id}', '${col.collectionId}')">
+                            <span class="icon-folder-alt" style="font-size: 24px;"><!-- &#128194 --></span>
+                            <span style="padding-left: 6px;">
+                                 ${col.name}
+                                <div>
+                                    <span style="font-size: 14px;/*! color: gray; */padding: 6px 0;display: block;" class="${id}noOfReqs"></span>
+                                </div>
+                             </span>
+                        </div>
+                        <span class="icon-options" style="float: right; padding: 4px; position: relative;" onclick="return showDropdown('.${currentTab}${id}collectionOptionsDropdown')">
+                                    <div class="dropdown ${currentTab}${id}collectionOptionsDropdown close" style="left: unset; right: 0;">
+                                        <ul>
+                                            <li><a onclick="return renameCollectionModal('${col.collectionId}')"><span style="padding-right: 4px;" class="icon-note"></span>Rename</a></li>
+                                            
+                                            <li><a onclick="return editCollectionModal('${col.collectionId}')"><span style="padding-right: 4px;" class="icon-pencil"></span>Edit</a></li>
+
+                                            
+                                            <li><a onclick="return viewCollectionModal('${col.collectionId}')"><span style="padding-right: 4px;" class="icon-eye"></span>View</a></li>
+                                            
+                                            <li><a onclick="return exportCollectionModal('${col.collectionId}')"><span style="padding-right: 4px;" class="icon-cloud-download"></span>Export</a></li>
+                                            <li><a onclick="return addRequestCollectionModal('${col.collectionId}')"><span style="padding-right: 4px;" class="icon-plus"></span>Add Request</a></li>
+                                            <!--
+                                            <li><a onclick="return shareCollectionModal('${col.collectionId}')"><span style="padding-right: 4px;" class="icon-share"></span>Share</a></li> -->
+                                            
+                                            
+                                            <li><a onclick="return deleteCollection('${col.collectionId}')"><span style="padding-right: 4px;" class="icon-trash"></span>Delete</a></li>
+                                        </ul>
+                                    </div>                        
+                        </span>
+                    </div>
+                    <ul class="historyCollectionsFolder ${id} close">
+            `
+
+            if (col.requests) {
                 col.requests.forEach(req => {
                     // gen tabId and attach to req
                     // TODO: check if tabId exists
-                    var tabId = "requestTab" + Date.now() + req.id
-                    req.tabId = tabId
+                    var tabId = "requestTab" + Date.now() + req.requestId
+                    // req.tabId = tabId
+                    req.tabId = req.tabId ? req.tabId : tabId
                     h += `
-                        <li class="historyLi" onclick="return requestItemClick(event, '${req.id}', '${col.id}')"><span class="historyItem historyItemMethodType color-orangered bd-rad-3 pd-2">${req.methodType}</span><span class="historyItemName">${req.name}</span></li>
+                        <li class="historyLi" onclick="return requestItemClick(event, '${req.requestId}', '${col.collectionId}')">
+                            <span class="historyItem historyItemMethodType color-orangered bd-rad-3 pd-2">${req.methodType}</span>
+                            <span class="historyItemName">${req.name}</span>
+                        </li>
                     `
                 })
             }
@@ -246,8 +295,8 @@ function requestItemClick(evt, reqId, colId) {
         data = filCols.requests.filter(req => req.requestId == reqId)[0]
          // log(data, filCols, reqId, colId)
     } else {
-        filCols = collections.filter(col => col.id == colId)[0]
-        data = filCols.requests.filter(req => req.id == reqId)[0]        
+        filCols = collections.filter(col => col.collectionId /*col.id */ == colId)[0]
+        data = filCols.requests.filter(req => req.requestId /*req.id*/ == reqId)[0]        
     }
     createNewReqTab(evt, data.tabId, data)
 }
@@ -290,20 +339,28 @@ function addReqCollection(event) {
                     if (doneReq) {
                         closeActiveModals()                        
                     }
+                    refreshCollections()
                 })
             } else {
                 addRequest(postData[currentTab], (doneReq, resReq) => {
                     if (doneReq) {
                         closeActiveModals()                        
                     }
+                    refreshCollections()
                     //log("addRequest:", doneReq, resReq, postData[currentTab])
                 })
             }
         })
     } else {
         // post to network
+        axios.post(url + "/collection/add/request/" + selectedColId, getCurrTab())
+            .then(res => {
+                closeActiveModals()
+                refreshCollections()                
+            }).catch(err => {
+
+            })
     }
-    refreshCollections()
 }
 
 function addToCollection(tabId) {
@@ -369,12 +426,19 @@ function removeReqFromCollection(tabId) {
     if(confirm("Do you really want to remove this request?")) {
         if(checkTeamIsPersonal()) {
             deleteRequest(postData[currentTab], (done, res) => {
-
+                if (done) {
+                    refreshCollections()                    
+                } else {
+                    displayNotif("Error occured while deleting a request", {type: "danger"})
+                }
             })
         } else {
             // network
+            axios.post(url + "/collection/delete/request", getCurrTab())
+                .then(res => {
+                    refreshCollections()                    
+                })
         }
-        refreshCollections()
     }
 }
 
@@ -458,6 +522,16 @@ function renameCollection(evt, colId) {
          })
      } else {
          // network
+         axios.post(url + "/collections/rename", {
+             collectionId: colId,
+             collectionName: colName
+         }).then(res => {
+             targ.removeAttribute("disabled", null)
+             targ.innerText = "Rename"                 
+             displayNotif("Collection successfully renamed.", { type: "success" })
+             closeActiveModals()
+             refreshCollections()
+         })
      }
  }
 }
@@ -481,7 +555,14 @@ function deleteCollection(colId) {
             })
         } else {
             // network
+            axios.post(url + "/team/remove/collection", {
+                collectionId: colId,
+                teamId: currentTeam.id
+            })
+                .then(res => {
+                    displayNotif("Collection successfully deleted.", {type: "success"})
+                    refreshCollections()                   
+                })
         }
-        refreshCollections()
     }
 }

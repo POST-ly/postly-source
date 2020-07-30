@@ -111,7 +111,7 @@ function send(event, tabId) {
         }
     }
 
-    var now = Date.now()
+    var startTime = Date.now()
 
     axiosInst({
         method: METHOD.toLowerCase(),
@@ -121,10 +121,14 @@ function send(event, tabId) {
         maxRedirects: getFromWindow(`${tabId}maxRedirects`).value || 0,
         withCredentials: postData.withcredentials || false
     }).then(res => {
-        setTimeResponse(tabId, now, Date.now())
+        var endTime = Date.now()
+        setTimeResponse(tabId, startTime, endTime)
+        setTimeToPostData(startTime, endTime)
         processResponse(res, tabId, event)
     }).catch(e => {
         // process error response
+        log(e)
+        // processResponseError(e.toString(), tabId, event)
     })
 }
 
@@ -351,10 +355,11 @@ function setResponseStatusText(statusText, tabId) {
 }
 
 function setTimeResponse(tabId, startTime, endTime) {
+    var time = Math.ceil((endTime - startTime) / 1000) + "s"
     var timeNode = document.querySelector(`.${tabId}responseTime`)
     timeNode.classList.remove("close")
     timeNode.classList.add("color-default")
-    timeNode.innerText = Math.ceil((endTime - startTime) / 1000) + "s"
+    timeNode.innerText = time
 }
 
 function processResponse(res, tabId, event) {
@@ -714,7 +719,8 @@ function downloadResponse(data, res) {
 
 function setResponseToPostData(res) {
     var currTab = getCurrTab()
-    currTab.response = {}
+    if(!currTab.response)
+        currTab.response = {}
     
     var data = res.data
     var headers = res.headers
@@ -734,4 +740,21 @@ function setResponseToPostData(res) {
 
     // Set response headers
     currTab.response.headers = headers
+}
+
+function setTimeToPostData(startTime, endTime) {
+    var cT = getCurrTab()
+    if (!cT.response) {
+        cT.response = {
+            time: {
+                startTime,
+                endTime
+            }            
+        }
+    } else {
+        cT.response.time = {
+                startTime,
+                endTime
+            }
+    }
 }

@@ -1,0 +1,15 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"></head><body><textarea style="width:99%;height:99%">var longtext = text1.length &gt; text2.length ? text1 : text2;
+var shorttext = text1.length &gt; text2.length ? text2 : text1;
+var i = longtext.indexOf(shorttext);
+if (i != -1) {
+  // Shorter text is inside the longer text.
+  diffs = [[DIFF_INSERT, longtext.substring(0, i)],
+           [DIFF_EQUAL, shorttext],
+           [DIFF_INSERT, longtext.substring(i + shorttext.length)]];
+  // Swap insertions for deletions if diff is reversed.
+  if (text1.length &gt; text2.length) {
+    diffs[0][0] = diffs[2][0] = DIFF_DELETE;
+  }
+  return diffs;
+}</textarea></body></html>

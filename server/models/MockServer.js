@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 
 let MockServerSchema = new mongoose.Schema({
     name: String,
-    teamId: mongoose.Schema.Types.ObjectId,
+    teamId: { type: mongoose.Schema.Types.ObjectId, ref: "Team" },
     MockServerId: mongoose.Schema.Types.ObjectId,
     endpoints: [ mongoose.Schema.Types.Mixed ]
 })

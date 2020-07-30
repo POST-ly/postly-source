@@ -14,6 +14,7 @@ function newEnvTab(tabId) {
                         <div class="EnvList">
                             <h3 class="lightWeight">All Envs</h3>
                             <ul id="${tabId}EnvsList">
+                                <!--
                                 <li class="EnvListItem">
                                     <div style="width: 100%; display: flex; align-items: center;" >
                                         <a style="padding: 0.4em 0.1em;">Prod</a><span class="icon-check color-default"></span>
@@ -40,6 +41,7 @@ function newEnvTab(tabId) {
                                                 </div>                        
                                     </span>
                                 </li>
+                                -->
                             </ul>
                         </div>
                         <div class="EnvVarsList">
@@ -150,6 +152,14 @@ function createGlobalEnv() {
         })
     } else {
         // network
+        axios.post(url + "envs", {
+            EnvId: "__globalEnv",
+            name: "Global",
+            vars: [],
+            teamId: currentTeam.id
+        }).then(res => {
+
+        })
     }
 }
 
@@ -172,6 +182,13 @@ function createEnvName(evt) {
         })
     } else {
         // network
+        axios.post(url + "envs", {
+            teamId: currentTeam.id,
+            name: getFromWindow(`${currentTab}EnvName`).value,
+            vars: []
+        }).then(res => {
+            refreshEnvs()
+        })
     }
     evt.target.innerHTML = "Create Env"
     evt.target.removeAttribute("disabled")
@@ -220,7 +237,33 @@ function refreshEnvsIdb() {
 
 // TODO: implement
 function refreshEnvsNetwork() {
-
+    var envsListNode = getFromWindow(`${currentTab}EnvsList`)
+    envsListNode.innerHTML = "Loading Envs..."
+    axios.get(url + "/envs/team/" + currentTeam.id)
+        .then(res => {
+            var envs = res.data
+            var htmlStr = ""
+            envs.forEach(env => {
+                var id = "Env" + Date.now() + env.EnvId
+                htmlStr += `
+                            <li class="EnvListItem" onclick="return setEnvVars(event, '${env.EnvId}')">
+                                <div style="width: 100%; display: flex; align-items: center;" >
+                                    <a style="padding: 0.4em 0.1em;">${env.name}</a>
+                                </div>
+                                <span class="icon-options" style="float: right; padding: 4px; position: relative;" onclick="return showDropdown('.${currentTab}${id}envOptionsDropdown')">
+                                            <div class="dropdown ${currentTab}${id}envOptionsDropdown close" style="left: unset; right: 0;">
+                                                <ul>
+                                                    <li><a onclick="return renameEnvModal(event, '${env.EnvId}')">Rename</a></li>
+                                                    <li><a onclick="return deleteEnv(event, '${env.EnvId}')">Delete</a></li>
+                                                </ul>
+                                            </div>                        
+                                </span>
+                            </li>
+                `
+            })
+            envsListNode.innerHTML = htmlStr
+            loadEnvsForDropdown()
+    })
 }
 
 function setEnvVars(event, envId) {
@@ -239,7 +282,7 @@ function setEnvVars(event, envId) {
     // find env in Envs
     for (var index = 0; index < Envs.length; index++) {
         var env = Envs[index]
-        if(checkTeamIsPersonal()) {
+        
             if(env.EnvId == envId) {
                 var envVars = env.vars;
                 var htmlStr = ""
@@ -248,20 +291,20 @@ function setEnvVars(event, envId) {
                     var vars = envVars[i];
                     htmlStr += `
                         <tr>
-                            <td><span id="${env.EnvId}NameVar">${vars.name}</span></td>
-                            <td><span id="${env.EnvId}ValueVar">${vars.value}</span></td>
+                            <td><span id="${vars.id}NameVar">${vars.name}</span></td>
+                            <td><span id="${vars.id}ValueVar">${vars.value}</span></td>
                             <td style="box-sizing: border-box;display: flex;">  
-                                <span title="Click to Save Vars" id="${env.EnvId}saveEnvVars" onclick="return saveEnvVars(event, '${env.EnvId}', '${vars.id}')" class="close icon-check" style="color: green; padding: 0.3em;display: block;"></span>
-                                <span title="Click to Inline Edit Vars" onclick="return editEnvVars(event, '${env.EnvId}')" class="icon-note" style="padding: 0.3em;display: block;"></span>
+                                <span title="Click to Save Vars" id="${vars.id}saveEnvVars" onclick="return saveEnvVars(event, '${env.EnvId}', '${vars.id}')" class="close icon-check" style="color: green; padding: 0.3em;display: block;"></span>
+                                <span title="Click to Inline Edit Vars" onclick="return editEnvVars(event, '${env.EnvId}', '${vars.id}')" class="icon-note" style="padding: 0.3em;display: block;"></span>
                                 <span title="Click to Delete Vars" onclick="return deleteEnvVars(event, '${env.EnvId}', '${vars.id}')" class="icon-trash" style=" color: red; padding: 0.3em;display: block;"></span>
                             </td>
                         </tr>
-                    `
+                    `;
                 }
                 getFromWindow(`${currentTab}EnvVarsList`).innerHTML = htmlStr
                 return;
             }
-        } else {}        
+        
     }    
 }
 
@@ -270,11 +313,18 @@ function deleteEnv(event, EnvId) {
         if(checkTeamIsPersonal()) {
             deleteRequestIdb(EnvId, (done, res) => {
                 log(done, res)
+                if (done) {
+                    refreshEnvs()                    
+                }
             })
         } else {
             // network
+            axios.delete(url + "envs", {
+                EnvId
+            }).then(res => {
+                refreshEnvs()
+            })
         }
-        refreshEnvs()
     }
 }
 
@@ -382,41 +432,50 @@ function addAllVars(evt) {
 
     // find the Env in Envs
     var resEnv = Envs.find(v => v.EnvId == envIdToLook)
-    if(resEnv) {
+    if (resEnv) {
         for (var index = 0; index < addVar.addedVars.length; index++) {
             var e = addVar.addedVars[index];
-            resEnv.vars.push(e)               
+            resEnv.vars.push(e)
         }
     }
 
-    if(checkTeamIsPersonal()) {
+    if (checkTeamIsPersonal()) {
         updateEnvIdb(resEnv, (done, d) => {
-
+            if (done) {
+                refreshEnvVars()                
+            }
         })
     } else {
         // network
+        axios.put(url + "envs/" + resEnv.EnvId, resEnv).then(res => {
+            refreshEnvVars()
+            displayNotif("Successfully added variables to environment.", { type: "success" })
+        })
     }
-    // refresh Env variables
-    var htmlStr = ""
-    for (var i = 0; i < resEnv.vars.length; i++) {
-        var vars = resEnv.vars[i];
-        htmlStr += `
-            <tr>
-                <td><span id="${resEnv.EnvId}NameVar">${vars.name}</span></td>
-                <td><span id="${resEnv.EnvId}ValueVar">${vars.value}</span></td>
-                <td style="box-sizing: border-box;display: flex;">
-                    <span title="Click to Save Vars" id="${resEnv.EnvId}saveEnvVars" onclick="return saveEnvVars(event, '${resEnv.EnvId}', '${vars.id}')" class="close icon-check" style="color: green; padding: 0.3em;display: block;"></span>
-                    <span title="Click to Inline Edit Vars" onclick="return editEnvVars(event, '${resEnv.EnvId}')" class="icon-note" style="padding: 0.3em;display: block;"></span>
-                    <span title="Click to Delete Vars" onclick="return deleteEnvVars(event, '${resEnv.EnvId}', '${vars.id}')" class="icon-trash" style="color: red; padding: 0.3em;display: block;"></span>
-                </td>
-            </tr>
-        `
-    }
-    getFromWindow(`${currentTab}EnvVarsList`).innerHTML = htmlStr
 
-    evt.target.removeAttribute("disabled")
-    evt.target.innerText = "Create"
-    closeActiveModals()
+    function refreshEnvVars() {
+        // refresh Env variables
+        var htmlStr = ""
+        for (var i = 0; i < resEnv.vars.length; i++) {
+            var vars = resEnv.vars[i];
+            htmlStr += `
+                <tr>
+                    <td><span id="${vars.id}NameVar">${vars.name}</span></td>
+                    <td><span id="${vars.id}ValueVar">${vars.value}</span></td>
+                    <td style="box-sizing: border-box;display: flex;">
+                        <span title="Click to Save Vars" id="${vars.id}saveEnvVars" onclick="return saveEnvVars(event, '${resEnv.EnvId}', '${vars.id}', '${vars.id}')" class="close icon-check" style="color: green; padding: 0.3em;display: block;"></span>
+                        <span title="Click to Inline Edit Vars" onclick="return editEnvVars(event, '${resEnv.EnvId}', '${vars.id}')" class="icon-note" style="padding: 0.3em;display: block;"></span>
+                        <span title="Click to Delete Vars" onclick="return deleteEnvVars(event, '${resEnv.EnvId}', '${vars.id}')" class="icon-trash" style="color: red; padding: 0.3em;display: block;"></span>
+                    </td>
+                </tr>
+            `;
+        }
+        getFromWindow(`${currentTab}EnvVarsList`).innerHTML = htmlStr
+
+        evt.target.removeAttribute("disabled")
+        evt.target.innerText = "Create"
+        closeActiveModals()
+    }
 }
 
 function deleteEnvVars(evt, envId, varId) {
@@ -434,15 +493,18 @@ function deleteEnvVars(evt, envId, varId) {
             })
         } else {
             // network
+            axios.put(url + "envs/" + currEnv.EnvId, currEnv).then(res => {
+                refreshEnvs()
+            })
         }
     }
 }
 
-function editEnvVars(evt, envId) {
-    var nameVar = window[`${envId}NameVar`]
-    var valueVar = window[`${envId}ValueVar`]
+function editEnvVars(evt, envId, varsId) {
+    var nameVar = window[`${varsId}NameVar`]
+    var valueVar = window[`${varsId}ValueVar`]
 
-    window[`${envId}saveEnvVars`].classList.remove("close")
+    window[`${varsId}saveEnvVars`].classList.remove("close")
 
     valueVar.setAttribute("contenteditable", true)
     valueVar.classList.add("EnvInlineEditVar")
@@ -453,13 +515,13 @@ function editEnvVars(evt, envId) {
 }
 
 function saveEnvVars(e, envId, varId) {
-    var nameVar = window[`${envId}NameVar`]
-    var valueVar = window[`${envId}ValueVar`]
+    var nameVar = window[`${varId}NameVar`]
+    var valueVar = window[`${varId}ValueVar`]
 
     var name = nameVar.innerText
     var value = valueVar.innerText
 
-    window[`${envId}saveEnvVars`].classList.add("close")
+    window[`${varId}saveEnvVars`].classList.add("close")
 
     valueVar.removeAttribute("contenteditable", null)
     valueVar.classList.remove("EnvInlineEditVar")
@@ -468,23 +530,27 @@ function saveEnvVars(e, envId, varId) {
     nameVar.classList.remove("EnvInlineEditVar")
 
     // collect values from "nameVar" and "valueVar"
-    if(checkTeamIsPersonal()) {
-        var currEnv = Envs.find((v) => v.EnvId == envId)
+        var currEnv = Envs.find((v) => v.EnvId == envId);
         currEnv.vars = currEnv.vars.map((v) => {
-            if(v.id == varId) {
-                return {
-                    id: varId,
-                    name,
-                    value
-                }
-            }
-        } )
+          if (v.id == varId) {
+            return {
+              id: varId,
+              name,
+              value,
+            };
+          }
+        });
+
+    if (checkTeamIsPersonal()) {
         updateEnvIdb(currEnv, (done, res) => {
             if(done)
                 refreshEnvs()
         })
     } else {
         // network
+        axios.put(url + "envs/" + currEnv.EnvId, currEnv).then(res => {
+            refreshEnvs()
+        })
     }
 }
 
@@ -492,22 +558,48 @@ function loadEnvsForDropdown() {
     var envsListNode = getFromWindow(`envsList`)
     envsListNode.innerHTML = "Loading Envs..."
     var htmlStr = ""
-    loadEnvsIdb((done, envs) => {
-        Envs = envs
-        if(done) {
-            for (var index = 0; index < envs.length; index++) {
-                var env = envs[index];
-                htmlStr += `
+    if (checkTeamIsPersonal()) {
+        loadEnvsIdb((done, envs) => {
+            Envs = envs
+            if (done) {
+                for (var index = 0; index < envs.length; index++) {
+                    var env = envs[index];
+                    htmlStr += `
                     <li><a onclick="return selectEnv(event, '${env.EnvId}')">${env.name}</a></li>
                 `
+                }
             }
-        }
-        htmlStr += `
+            htmlStr += `
             <li class="divider"></li>
             <li><a onclick="return createNewEnvTab()">Create New Env</a></li>
         `
-        envsListNode.innerHTML = htmlStr
-    })
+            envsListNode.innerHTML = htmlStr
+        })
+    } else {
+        // network        
+        axios.get(url + "/envs/team/" + currentTeam.id)
+            .then(res => {
+                var envs = res.data
+                Envs = envs
+                var htmlStr = ""
+                envs.forEach(env => {
+                    var id = "Env" + Date.now() + env.EnvId
+                    htmlStr += `
+                        <li><a onclick="return selectEnv(event, '${env.EnvId}')">${env.name}</a></li>
+                    `
+                })
+                htmlStr += `
+                    <li class="divider"></li>
+                    <li><a onclick="return createNewEnvTab()">Create New Env</a></li>
+                `
+                envsListNode.innerHTML = htmlStr
+            }).catch(err => {
+                envsListNode.innerHTML = `
+                    <li class="divider"></li>
+                    <li><a onclick="return createNewEnvTab()">Create New Env</a></li>
+                `
+            })
+    }
 }
 
 function selectEnv(event, envId) {
@@ -565,21 +657,21 @@ function renameEnv(event, envNewName, envId) {
     targ.innerText = "Renaming..."
 
     var newEnvName = window[envNewName].value
-    if(newEnvName.length <= 0) {
+    if (newEnvName.length <= 0) {
         var errorNode = window["renameEnvModalError"]
         errorNode.innerText = "Please, type a name"
         errorNode.classList.remove("close")
         return
     }
 
-    if(checkTeamIsPersonal()) {
+    if (checkTeamIsPersonal()) {
         var cEnv = Envs.find(v => {
             return v.EnvId == envId
         })
 
         cEnv.name = newEnvName
         updateEnvIdb(cEnv, (done, res) => {
-            if(done) {
+            if (done) {
                 refreshEnvs()
                 targ.removeAttribute("disabled", true)
                 targ.innerText = "Rename"
@@ -588,6 +680,14 @@ function renameEnv(event, envNewName, envId) {
         })
     } else {
         // network
+        axios.put(url + "envs/" + cEnv.EnvId, cEnv).then(res => {
+            refreshEnvs()
+            targ.removeAttribute("disabled", true)
+            targ.innerText = "Rename"
+            closeActiveModals()
+        }).catch(err => {
+            targ.removeAttribute("disabled", true)
+            targ.innerText = "Rename"
+        })
     }
-
 }

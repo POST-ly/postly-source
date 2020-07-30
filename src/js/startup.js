@@ -18,7 +18,15 @@ window.addEventListener("DOMContentLoaded", () => {
     // localStorage.setItem("currentTeam", JSON.stringify({ id: 1, ​name: "forLoop Africa Team" }));
     try {
         currentTeam = JSON.parse(localStorage.getItem("currentTeam"));
-        if(!currentTeam) currentTeam = { id: "Personal", name: "Personal Team" } 
+        if (!currentTeam) {
+            currentTeam = { id: "Personal", name: "Personal Team" }
+        } else {
+            if (currentTeam.id == "personal") {
+                currentTeam = { id: "Personal", name: "Personal Team" }                
+            } else {
+                loadATeam(currentTeam)
+            }
+        }
     } catch(e) {
         currentTeam = { id: "Personal", name: "Personal Team" }         
     }
@@ -26,7 +34,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
     // attachCollectionModal()
     // attachSaveModal()
-
+    renderAuthButtons()
+    renderTeamChat()
     setupMockServersIdb()
     setUpCollectionsIdb()
     setUpRequestsIdb()

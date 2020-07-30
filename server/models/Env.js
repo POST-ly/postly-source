@@ -6,7 +6,7 @@ const mongoose = require('mongoose')
  */
 let EnvSchema = new mongoose.Schema({
     name: String,
-    teamId: mongoose.Schema.Types.ObjectId,
+    teamId: { type: mongoose.Schema.Types.ObjectId, ref: "Team"},
     EnvId: mongoose.Schema.Types.ObjectId,
     vars: [ mongoose.Schema.Types.Mixed ]
 })
