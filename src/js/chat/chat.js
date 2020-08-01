@@ -1,3 +1,5 @@
+const socketIO = require("../../../server/socketio/socketio");
+
 function renderTeamChat() {
     var chatNode = getFromWindow("teamChatArea")
     if (IsUserAuth()) {
@@ -7,7 +9,16 @@ function renderTeamChat() {
             <span class="icon-bubbles"></span>
             </a>
         `
+        setupSocketIOClient()
     }
+}
+
+function setupSocketIOClient() {
+    var socket = io();
+    setupSocketIOClient.socket = socket
+    socket.on("message", function (data) {
+        
+    })
 }
 
 function teamChatSidebar(event) {
@@ -67,16 +78,25 @@ function teamChatSidebar(event) {
 }
 
 function teamChatInputKeydown(evt) {
-    if (evt.key == "") {
-        
+    log(evt)
+    if (evt.key == "Enter" || evt.keyCode == 13) {
+        setupSocketIOClient.socket.emit("message", {
+            teamId: currentTeam.id,
+            message: getFromWindow("teamChatInput").value,
+            date: new Date().toString()
+        })
     }
-    //id="teamChatInput" onkeydown="return teamChatInputKeydown(event)"
+    // id="teamChatInput" onkeydown="return teamChatInputKeydown(event)"
+
+    // send message then clear input
 }
 
 function sendTeamMsg(event) {
-    // get messgae fomr input text
+    // get message fomr input text
+    setupSocketIOClient.socket.emit("message", {
+        teamId: currentTeam.id,
+        message: getFromWindow("teamChatInput").value,
+        date: new Date().toString()
+    })
 }
 
-/*
-
-*/

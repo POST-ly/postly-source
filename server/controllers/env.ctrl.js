@@ -33,12 +33,9 @@ module.exports = {
             teamId,
             vars
         } = req.body
-        
-        log(req.body)
-        
+                
         Env.findOne({ "EnvId": mongoose.Types.ObjectId(EnvId) }, (err, foundEnv) => {
             if (!err) {
-                log(foundEnv)
                 foundEnv.name = name
                 foundEnv.vars = vars
                 foundEnv.save((_err, savedEnv) => {
@@ -65,7 +62,6 @@ module.exports = {
             vars
         } = req.body
 
-        log(req.body)
         if (req.body.EnvId == "__globalEnv") {
             Env.find({ "EnvId": "__globalEnv" }, (err, foundEnv) => {
                 if (!err) {

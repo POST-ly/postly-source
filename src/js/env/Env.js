@@ -480,13 +480,14 @@ function addAllVars(evt) {
 
 function deleteEnvVars(evt, envId, varId) {
     if(confirm("Do you want to delete this variable?")) {
-        if(checkTeamIsPersonal()) {
-            var currEnv = Envs.find((v) => v.EnvId == envId)
-            currEnv.vars = currEnv.vars.filter((v) => {
-                if(v.id !== varId)
-                    return true
-                return false
-            })
+        var currEnv = Envs.find((v) => v.EnvId == envId)
+        currEnv.vars = currEnv.vars.filter((v) => {
+            if (v.id !== varId)
+                return true
+            return false
+        })
+
+        if (checkTeamIsPersonal()) {
             updateEnvIdb(currEnv, (done, res) => {
                 if(done)
                     refreshEnvs()
@@ -539,6 +540,7 @@ function saveEnvVars(e, envId, varId) {
               value,
             };
           }
+          return v
         });
 
     if (checkTeamIsPersonal()) {
@@ -663,13 +665,13 @@ function renameEnv(event, envNewName, envId) {
         errorNode.classList.remove("close")
         return
     }
+    var cEnv = Envs.find(v => {
+        return v.EnvId == envId
+    })
+
+    cEnv.name = newEnvName
 
     if (checkTeamIsPersonal()) {
-        var cEnv = Envs.find(v => {
-            return v.EnvId == envId
-        })
-
-        cEnv.name = newEnvName
         updateEnvIdb(cEnv, (done, res) => {
             if (done) {
                 refreshEnvs()

@@ -1,14 +1,43 @@
 function viewMockServersModal(event) {
     var mockServersHtml = "Loading Mock Servers..."
 
-    getMockServersIdb((done, mockServers) => {
-        // log(done, mockServers)
-        if(done) {
+    if (checkTeamIsPersonal()) {
+        getMockServersIdb((done, mockServers) => {
+            // log(done, mockServers)
+            if (done) {
+                mockServersHtml = ""
+                mockServers.forEach(mS => {
+                    var buttonHtmlStr = `<button onclick="return setAsActiveMockServer(event, '${mS.mockServerId}')">Activate</button>`
+                    if (currentMockServer) {
+                        if (mS.mockServerId == currentMockServer.mockServerId) {
+                            buttonHtmlStr = `<button class="bg-green" onclick="return removeAsActiveMockServer(event, '${mS.mockServerId}')">Deactivate</button>`
+                        }
+                    }
+
+                    mockServersHtml += `
+                    <li style="display: flex; justify-content: space-between; padding: 10px 2px; padding-left: 5px; border-bottom: 1px solid rgb(221, 221, 221);">
+                        <span>
+                            ${mS.name}
+                            <div>
+                                <small style="padding: 3px 0;display: block;">${mS.endPoints.length} endpoint(s)</small>
+                            </div>
+                        </span>
+                        <div>
+                            ${buttonHtmlStr}                            
+                        </div>
+                    </li>
+                `
+                })
+                document.querySelector(".mockServersList").innerHTML = mockServersHtml
+            }
+        })        
+    } else {
+        axsio.get(url + "mockServers/team/" + currentTeam.id).then(res => {
             mockServersHtml = ""
             mockServers.forEach(mS => {
                 var buttonHtmlStr = `<button onclick="return setAsActiveMockServer(event, '${mS.mockServerId}')">Activate</button>`
-                if(currentMockServer) {
-                    if(mS.mockServerId == currentMockServer.mockServerId) {
+                if (currentMockServer) {
+                    if (mS.mockServerId == currentMockServer.mockServerId) {
                         buttonHtmlStr = `<button class="bg-green" onclick="return removeAsActiveMockServer(event, '${mS.mockServerId}')">Deactivate</button>`
                     }
                 }
@@ -28,8 +57,8 @@ function viewMockServersModal(event) {
                 `
             })
             document.querySelector(".mockServersList").innerHTML = mockServersHtml
-        }
-    })
+        })
+    }
 
     var viewMockServersModalStr = `
     <!-- <div class="modal"> -->
@@ -68,16 +97,29 @@ function viewMockServersModal(event) {
 }
 
 function setAsActiveMockServer(event, mockServerId) {
-    getMockServerIdb(mockServerId, (done, mockServer) => {
-        if(done) {
+    if (checkTeamIsPersonal()) {
+        getMockServerIdb(mockServerId, (done, mockServer) => {
+            if (done) {
+                mockCalls = true
+                currentMockServer = mockServer
+                event.target.classList.add("bg-green")
+                event.target.removeEventListener("click", null)
+                event.target.innerHTML = "Deactivate"
+                event.target.addEventListener("click", (e) => removeAsActiveMockServer(e, mockServerId))
+            }
+        })        
+    } else {
+        axios.get(url + "mockServers/" + mockServerId).then(res => {
             mockCalls = true
             currentMockServer = mockServer
             event.target.classList.add("bg-green")
             event.target.removeEventListener("click", null)
             event.target.innerHTML = "Deactivate"
             event.target.addEventListener("click", (e) => removeAsActiveMockServer(e, mockServerId))
-        }
-    })
+        }).catch(err => {
+
+        })
+    }
 }
 
 function removeAsActiveMockServer(evt, mockServerId) {

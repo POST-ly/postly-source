@@ -74,4 +74,10 @@ module.exports = (router) => {
         .route('/team/remove/collection')
         .post(teamCtrl.removeCollectionFromTeam)
 
+    /**
+     * Import a collection
+     */
+    router
+        .route("/team/collection/import")
+        .post(teamCtrl.importCollection)
 }

@@ -287,7 +287,50 @@ module.exports = {
                 })
             }
         })
+    },
 
+    importCollection: (req, res, next) => {
+        const col = req.body
+
+        Collection.create({
+            name: col.collectionName,
+            teamId: col.teamId
+        }, (err, collection) => {
+            collection.collectionId = collection._id
+            collection.save()
+            Team.findById(mongoose.Types.ObjectId(col.teamId), (err, team) => {
+                if (!err) {
+                    team.collections.push(mongoose.Types.ObjectId(collection._id))
+                    team.save((_err, _team) => {
+                        if (!_err) {
+                            if (col.requests) {
+                                // for each requests create a Request
+                                col.requests.forEach(_req => {
+                                    
+                                    delete _req.tabId
+                                    delete _req.teamId
+                                    delete _req.collectionId
+                                    delete _req.requestId
+                                    
+                                    Request.create(_req, (_er, request) => {
+                                        if (!err) {
+                                            request.requestId = request._id
+                                            request.collectionId = collection._id
+                                            request.save()
+
+                                            collection.requests.push(request._id)
+                                            collection.save()
+                                        } else {
+                                            res.send(_er)
+                                        }
+                                    })
+                                })
+                            }                            
+                        }
+                    })
+                }
+            })
+        })
     }
 }
 

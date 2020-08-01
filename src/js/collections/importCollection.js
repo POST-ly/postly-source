@@ -72,17 +72,18 @@ function importCollection(evt) {
     targ.setAttribute("disabled", true)
     targ.innerText = "Importing..."
 
-    if(checkTeamIsPersonal()) {
-        var col = JSON.parse(handleFileImport.collectionImport)
-        var colReqs = col.requests ? col.requests : []
+    var col = JSON.parse(handleFileImport.collectionImport)
+    var colReqs = col.requests ? col.requests : []
 
+    if(checkTeamIsPersonal()) {
         // add reqs
         for (var index = 0; index < colReqs.length; index++) {
             var colReq = colReqs[index];
             addRequest(colReq, (done, newReq) => {
-                if(done) {}
+                if (done) { }
             })
         }
+
         updateCollection(col, (_done, newCol) => {
             if(_done) {
                 handleFileImport["previewImportCollectionEditor"].setValue("")
@@ -97,5 +98,22 @@ function importCollection(evt) {
         })
     } else {
         // network
+        /**
+         * This will create a new collection.
+         */
+        axios.post(url + "team/collection/import", col).then(res => {
+            handleFileImport["previewImportCollectionEditor"].setValue("")
+            handleFileImport["previewImportCollectionEditor"].refresh()
+            delete handleFileImport.collectionImport
+            delete handleFileImport["previewImportCollectionEditor"]
+            window["importCollectionFile"].value = ""
+            refreshCollections()
+
+            targ.removeAttribute("disabled", null)
+            targ.innerText = "Import"
+        }).catch(err => {
+            targ.removeAttribute("disabled", null)
+            targ.innerText = "Import"
+        })
     }
 }

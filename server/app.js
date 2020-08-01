@@ -8,8 +8,12 @@ const path = require('path')
 
 const routes = require('./routes/')
 const midWares = require("./middlewares")
+const socketIO = require("./socketio/socketio.js")
 
 const app = express()
+var http = require("http").createServer(app);
+var io = require("socket.io")(http);
+
 const router = express.Router()
 const url = process.env.MONGODB_URI || "mongodb://localhost:27017/postly"
     
@@ -23,6 +27,9 @@ try {
 }
 
 let port = 5000 || process.env.PORT
+
+/** set up socket.io connections */
+socketIO(io)
 
 /** set up routes {API Endpoints} */
 routes(router)

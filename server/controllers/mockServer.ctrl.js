@@ -10,6 +10,13 @@ module.exports = {
     getMockServer: (req, res, next) => {
         var mockServerId = req.params.mockServerId
 
+        MockServer.find({ "mockServerId": mockServerId }, (err, mServer) => {
+            if (!err) {
+                res.send(mServer)
+            } else {
+                res.send(err)
+            }
+        })
     },
 
     createMockServer: (req, res, next) => {

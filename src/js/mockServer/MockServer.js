@@ -196,6 +196,7 @@ function createMockServer(event) {
     } else {
         // TODO: Add network implementation.
         axios.post(url + "mockServers", {
+            teamId: currentTeam.id,
             name: mockServerName,
             endPoints: endPoints
         }).then(res => {
