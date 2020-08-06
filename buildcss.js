@@ -15,6 +15,7 @@ var filesToBundle = [
                 "./src/css/Env.css",
                 "./src/css/notif.css",
                 "./src/css/chat.css",
+                "./src/css/auth.css"
 ]
 
 
