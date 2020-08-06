@@ -14,7 +14,7 @@ module.exports = {
             if (!err) {
                 res.send(mServer)
             } else {
-                res.send(err)
+                res.send({ error: err })
             }
         })
     },
@@ -26,7 +26,7 @@ module.exports = {
                 mockServer.save()
                 res.send(mockServer)
             } else{
-                res.send(err)
+                res.send({ error: err })
             }
         })
     },
@@ -37,7 +37,7 @@ module.exports = {
             if (!err) {
                 res.send(mServers)                
             } else {
-                res.send(err)
+                res.send({ error: err })
             }
         })
     },
@@ -56,7 +56,7 @@ module.exports = {
                 mServer.save()
                 res.send(mServer)
             } else {
-                res.send(err)
+                res.send({ error: err })
             }
         })
     },
@@ -73,7 +73,7 @@ module.exports = {
                 mServer.remove()
                 res.send(mServer)
             } else {
-                res.send(err)
+                res.send({ error: err })
             }
         })
     }

@@ -8,6 +8,19 @@ module.exports = (router) => {
     router
         .route('/user/:id')
         .get(userCtrl.getUser)
+    /**
+     * get a user by username
+     */
+    router
+        .route('/user/get/:username')
+        .get(userCtrl.getUserByUsername)
+
+    /**
+     * get user me
+     */
+    router
+        .route('/user/me/get')
+        .get(userCtrl.getUserMe)
 
     /**
      * verify a user

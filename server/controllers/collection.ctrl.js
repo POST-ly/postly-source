@@ -11,7 +11,11 @@ module.exports = {
         Collection.find({ "teamId": mongoose.Types.ObjectId(teamId) })
             .populate("requests")
             .exec((err, cols) => {
-                res.send(cols)
+                if(!err) {
+                    res.send(cols)
+                } else {
+                    res.send({ error: err })
+                }
             })
     },
     
@@ -30,15 +34,17 @@ module.exports = {
                 request.collectionId = colId
                 request.save()
 
-                Collection.findById(colId, (err, col) => {
+                Collection.findById(colId, (er, col) => {
                     col.requests.push(request._id)
                     col.save()
                 })
-                if (!err) {
+                if (!er) {
                     res.send(request)
-                }                
+                } else {
+                    res.send({ error: er })
+                }
             } else {
-                res.send(err)
+                res.send({ error: err })
             }
         })
     },
@@ -72,15 +78,15 @@ module.exports = {
                 request.visualizer=visualizer
                 request.variables = variables
 
-                request.save((err, savedReq) => {
-                    if (!err) {
+                request.save((er, savedReq) => {
+                    if (!er) {
                         res.send(savedReq)
                     } else {
-                        res.send("Error occured when updating request")
+                        res.send({ error: "Error occured when updating request" })
                     }
                 })                
             } else {
-                res.send(err)
+                res.send({ error: err })
             }
         })        
     },
@@ -95,7 +101,7 @@ module.exports = {
             authorization
         } = req.body
 
-        Collection.findById(req.body.collectionId, (err, col) => {
+        Collection.findById(mongoose.Types.ObjectId(req.body.collectionId), (err, col) => {
             if (!err) {
                 col.name = name
                 col.variables = variables
@@ -105,17 +111,39 @@ module.exports = {
                 col.save((_err, updatedCol) => {
                     if (!_err) {
                         res.send(updatedCol)
+                    } else {
+                        res.send({ error:  _err })
                     }
                 })
-            }            
+            } else {
+                res.send({ error: err })
+            }
         })
     },
 
     // Delete a Request.
-    deleteRequest: (req, res,  next) => {
-        Request.findById(req.body.requestId, (err, request) => {
-            request.remove()
-            res.send(request)
+    deleteRequest: (req, res, next) => {
+        var reqId = req.body.requestId
+        Request.findById(reqId, (err, request) => {
+            if(!err) {
+                request.remove()
+
+                // remove request from collection "requests" array.
+                Collection.find({ "requests": mongoose.Types.ObjectId(reqId) })
+                    .exec((er, cols) => {
+                        if(!er) {
+                            cols.requests = cols.requests.filter(req => {
+                                return req !== reqId
+                            })
+                            cols.save()
+                            res.send(request)
+                        } else {
+                            res.send({ error: er })
+                        }
+                })
+            } else {
+                res.send({ error: err })
+            }
         })
     },
 
@@ -130,7 +158,7 @@ module.exports = {
                 collection.save()
                 res.send(collection)                
             } else {
-                res.send(err)
+                res.send({ error: err })
             }
         })
     }

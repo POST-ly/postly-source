@@ -97,9 +97,13 @@ function createCollection(event) {
             teamId: currentTeam.id,
             collectionName: colName
         }).then(res => {
-            var r = res.data
             btnNode.removeAttribute("disabled")
             btnNode.innerText = "Create"
+            if(res.data.error) {
+                displayNotif(res.data.error, { type: "danger" })
+                return
+            }
+            var r = res.data
             closeActiveModals()
             refreshCollections()
         }).catch(err => {
@@ -128,6 +132,11 @@ function refreshCollectionsNetwork() {
     var htmlStr = ""
 
     axios.get(url + "collections/" + currentTeam.id).then(res => {
+        if(res.data.error) {
+            ul.innerHTML = ""
+            displayNotif(res.data.error, { type: "danger" })
+            return
+        }
         var cols = res.data
         collections = cols
 
@@ -140,6 +149,8 @@ function refreshCollectionsNetwork() {
                     <ul class="historyCollectionsFolder ${id} close">
             `
             */
+            var noOfReqs = col.requests ? col.requests.length + " request(s)" : "0 request"
+
             var h = `
                 <li class="historyLi collectionFolder ${col.collectionId}Collection">
                     <div style="display: flex;width: 100%;">
@@ -148,7 +159,9 @@ function refreshCollectionsNetwork() {
                             <span style="padding-left: 6px;">
                                  ${col.name}
                                 <div>
-                                    <span style="font-size: 14px;/*! color: gray; */padding: 6px 0;display: block;" class="${id}noOfReqs"></span>
+                                    <span style="font-size: 14px;/*! color: gray; */padding: 6px 0;display: block;" class="${id}noOfReqs">
+                                        ${noOfReqs}
+                                    </span>
                                 </div>
                              </span>
                         </div>
@@ -355,10 +368,19 @@ function addReqCollection(event) {
         // post to network
         axios.post(url + "/collection/add/request/" + selectedColId, getCurrTab())
             .then(res => {
+                if(res.data.error) {
+                    displayNotif(res.data.error, { type: "danger" })
+                    return
+                }
+                var addedReq = res.data
+                postData[currentTab].collectionId = addedReq.collectionId
+                postData[currentTab].requestId = addedReq.requestId
+
                 closeActiveModals()
+                displayNotif("Successfully added request to collection", {type: "success"})
                 refreshCollections()                
             }).catch(err => {
-
+                displayNotif("Error occured while adding request to collection", {type: "danger"})
             })
     }
 }
@@ -427,6 +449,8 @@ function removeReqFromCollection(tabId) {
         if(checkTeamIsPersonal()) {
             deleteRequest(postData[currentTab], (done, res) => {
                 if (done) {
+                    delete postData[currentTab].collectionId
+                    delete postData[currentTab].requestId
                     refreshCollections()                    
                 } else {
                     displayNotif("Error occured while deleting a request", {type: "danger"})
@@ -436,7 +460,15 @@ function removeReqFromCollection(tabId) {
             // network
             axios.post(url + "/collection/delete/request", getCurrTab())
                 .then(res => {
+                    if(res.data.error) {
+                        displayNotif(res.data.error, { type: "danger" })
+                        return
+                    }
+                    delete postData[currentTab].collectionId
+                    delete postData[currentTab].requestId
                     refreshCollections()                    
+                }).catch(err => {
+                    displayNotif("Error occurred while deleting the request.", { type: "danger" })
                 })
         }
     }
@@ -528,9 +560,15 @@ function renameCollection(evt, colId) {
          }).then(res => {
              targ.removeAttribute("disabled", null)
              targ.innerText = "Rename"                 
+             if(res.data.error) {
+                 displayNotif(res.data.error, { type: "danger" })
+                 return
+             }
              displayNotif("Collection successfully renamed.", { type: "success" })
              closeActiveModals()
              refreshCollections()
+         }).catch(err => {
+            displayNotif("Error occurred while renaming the request.", { type: "danger" })
          })
      }
  }
@@ -560,8 +598,14 @@ function deleteCollection(colId) {
                 teamId: currentTeam.id
             })
                 .then(res => {
+                    if(res.data.error) {
+                        displayNotif(res.data.error, { type: "danger" })
+                        return
+                    }
                     displayNotif("Collection successfully deleted.", {type: "success"})
                     refreshCollections()                   
+                }).catch(err => {
+                    displayNotif("Error occured while removing a collection.", { type: "danger" })
                 })
         }
     }

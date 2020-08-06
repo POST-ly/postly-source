@@ -2,15 +2,21 @@ window.addEventListener("DOMContentLoaded", () => {
 
     // check the user is logged in
     try {
-        user = JSON.parse(localStorage.getItem("user"))    
+        /*
+            user = JSON.parse(localStorage.getItem("user"))    
+        */
     } catch (err) {
-        user = { name: "nnamdi chidu", id: 0 }
+        /*
+            user = { name: "nnamdi chidu", id: 0 }
+        */
     }
 
     try {
         if(!user) {
-            localStorage.setItem("user", JSON.stringify({ name: "nnamdi chidu", id: 0 }))
-            user = { name: "nnamdi chidu", id: 0 }
+            /*
+                localStorage.setItem("user", JSON.stringify({ name: "nnamdi chidu", id: 0 }))
+                user = { name: "nnamdi chidu", id: 0 }
+            */
         }
     } catch (err) {}
 
@@ -34,19 +40,23 @@ window.addEventListener("DOMContentLoaded", () => {
 
     // attachCollectionModal()
     // attachSaveModal()
-    renderAuthButtons()
-    renderTeamChat()
-    setupMockServersIdb()
-    setUpCollectionsIdb()
-    setUpRequestsIdb()
-    setUpHistoryIdb()
-    setUpEnvIdb()
+    if (checkTeamIsPersonal()) {
+        setupMockServersIdb()
+        setUpCollectionsIdb()
+        setUpRequestsIdb()
+        setUpHistoryIdb()
+        setUpEnvIdb()        
+    }
 
     loadTeams()
+    renderAuthButtons()
+
     loadEnvsForDropdown()
 
     addNewTab(null, true)
     setVisualizerData()
+
+    renderTeamChat()
 
     refreshHistoryTab()
     refreshCollections()

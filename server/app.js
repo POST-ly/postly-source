@@ -12,11 +12,19 @@ const socketIO = require("./socketio/socketio.js")
 
 const app = express()
 var http = require("http").createServer(app);
-var io = require("socket.io")(http);
+var io = require("socket.io")(http, {
+    handlePreflightRequest: (req, res) => {
+        res.writeHead(200, {
+            "Access-Control-Allow-Credentials": true,
+            "Access-Control-Allow-Origin": "*"
+        })
+        res.end()
+    }
+});
 
 const router = express.Router()
 const url = process.env.MONGODB_URI || "mongodb://localhost:27017/postly"
-    
+// MongoDN prod url: mongodb://nnamdi:mlab1992@ds123050.mlab.com:23050/postly    
 /** connect to MongoDB datastore */
 try {
     mongoose.connect(url, {
@@ -77,6 +85,6 @@ app.get('*', function(req, res) {
 
 
 /** start server */
-app.listen(port, () => {
+http.listen(port, () => {
     console.log(`Server started at port: ${port}`);
 });

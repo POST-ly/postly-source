@@ -7,7 +7,7 @@ module.exports = {
     getEnvs: (req, res, next) => {
         Env.find((err, envs) => {
             if(err) {
-                res.send(err)
+                res.send({ error: err })
                 next()
             }
             res.send(envs)
@@ -21,7 +21,7 @@ module.exports = {
             if (!err) {
                 res.send(envs)
             } else {
-                res.send(err)
+                res.send({ error: err })
             }
         })
     },
@@ -41,10 +41,12 @@ module.exports = {
                 foundEnv.save((_err, savedEnv) => {
                     if (!_err) {
                         res.send(savedEnv)                        
+                    } else {
+                        res.send({ error: _err })
                     }
                 })
             } else {
-                res.send(err)
+                res.send({ error: err })
             }
         })
     },
@@ -65,7 +67,7 @@ module.exports = {
         if (req.body.EnvId == "__globalEnv") {
             Env.find({ "EnvId": "__globalEnv" }, (err, foundEnv) => {
                 if (!err) {
-                    res.send("Already exist")
+                    res.send({ error: "Already exist" })
                 } else {
                     Env.create({
                         name,
@@ -74,8 +76,10 @@ module.exports = {
                         EnvId: "__globalEnv"
                     }, (err, newEnv) => {
                             if (!err) {
-                            res.send(newEnv)
-                        }                            
+                                res.send(newEnv)
+                            } else {
+                                res.send({ error: err })
+                            }
                     })
                 }
             })
@@ -86,7 +90,7 @@ module.exports = {
                     newEnv.save()
                     res.send(newEnv)
                 } else {
-                    res.send(err)
+                    res.send({ error: err })
                 }
             })
         }
@@ -106,7 +110,7 @@ module.exports = {
                 env.remove()
                 res.send(env)
             } else {
-                res.send(err)
+                res.send({ error: err })
             }
         })
     }

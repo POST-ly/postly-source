@@ -1,4 +1,5 @@
 var url = "http://localhost:5000/api/"
+var socketioUrl = "http://localhost:5000/"
 // var proxyUrl = "http://localhost:4000/proxy/"
 var proxyUrl = "https://node-app08.herokuapp.com/proxy/"
 var log = console.log.bind(console)

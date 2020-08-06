@@ -2,7 +2,10 @@ const log = console.log
 const mongoose = require('mongoose')
 
 let UserSchema = new mongoose.Schema({
-    username: String,
+    username: {
+        type: String,
+        unique: true
+    },
     email: {
         type: String,
         unique: true

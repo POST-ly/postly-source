@@ -5,6 +5,7 @@ const User = require('./../models/User')
 const Team = require('./../models/Team')
 const Collection = require("./../models/Collection")
 const Request = require("./../models/Request")
+const Env = require("./../models/Env")
 const collectionCtrl = require("./collection.ctrl")
 
 const log = console.log
@@ -18,7 +19,7 @@ module.exports = {
     getTeams: (req, res, next) => {
         Team.find((err, teams) => {
             if (err) {
-                res.send(err)
+                res.send({ error: err })
                 next()
             }
             res.send(teams)
@@ -32,7 +33,7 @@ module.exports = {
     getTeamsColsReqsByUserId: (req, res, next) => {
         var teamId = req.params.teamId        
         if (!req.user)
-            res.send("You must be signed to retrieve your Teams.")
+            res.send({ error: "You must be signed to retrieve your Teams." })
         else {
             var user = mongoose.Types.ObjectId(req.user.id)
             // db.getCollection('teams').find({"users.id": ObjectId("5f189c365649571648725ea3")})
@@ -40,8 +41,11 @@ module.exports = {
                 .populate("collections")
                 .populate("requests")
                 .exec((err, team) => {
-                    log(team)
-                    res.send(team)
+                    if(!err) {
+                        res.send(team)
+                    } else {
+                        res.send({ error: err })
+                    }
             })
         }
     },
@@ -52,13 +56,40 @@ module.exports = {
      */
     getTeamsByUserId: (req, res, next) => {
         if (!req.user)
-            res.send("You must be signed to retrieve your Teams.")
+            res.send({ error: "You must be signed to retrieve your Teams." })
         else {
             var user = mongoose.Types.ObjectId(req.user.id)
             // db.getCollection('teams').find({"users.id": ObjectId("5f189c365649571648725ea3")})
-            Team.find({ "users.id": user }, { "name": 1, "teamId": 1 })
-                .exec((err, team) => {
-                    res.send(team)
+            Team.find({ "users.id": user }, { "name": 1, "teamId": 1, "users": 1 })
+                .populate("users.id", { "username": 1, "email": 1 })
+                .lean()
+                .exec((err, teams) => {
+                    if(!err) {
+                        teams = teams.map(team => {
+                            
+                            team.users = team.users.reduce((arr, u) => {
+                                if (u.id) {
+                                    if (u.id._id.toString() == user.toString()) {
+                                        if (!team.role) {
+                                            team.role = u.role
+                                        }
+                                    } else {
+                                        u.username = u.id.username
+                                        u.email = u.id.email
+                                        u.id = u._id
+                                        delete u._id                                    
+                                        arr.push(u)
+                                    }
+                                }
+                                return arr
+                            }, [])
+                            delete team._id
+                            return team
+                        })
+                        res.send(teams)
+                    } else {
+                        res.send({ error: err })
+                    }
             })
         }
     },
@@ -69,19 +100,71 @@ module.exports = {
         } = req.body
 
         if (!req.user)
-            res.send("You must be signed to create a Team.")
+            res.send({ error: "You must be signed to create a Team." })
         else {
-            var newTeam = Team.create({
+            Team.create({
                 name: teamName,
                 users: [{
                     role: "owner",
                     id: mongoose.Types.ObjectId(req.user.id)
                 } ]
+            }, (err, newTeam) => {
+                    if (!err) {
+                        newTeam.teamId = newTeam._id
+                        res.send(newTeam)                    
+                    } else {
+                        res.send({ error: err })
+                    }
             })
-            newTeam.teamId = newTeam._id
-            res.send(newTeam)
         }
         next()
+    },
+
+    editTeam: (req, res, next) => {
+
+    },
+    
+    deleteTeam: (req, res, next) => {
+        const teamId = req.params.teamId
+
+        // Delete team.
+        // delete all collections on teams.
+        // delete all requests on collections.
+        // delete all envs in the team
+        // delete all mockservers in the team
+        // remove users on team
+
+        Team.remove({ "id": teamId }, (err) => {
+            if (!err) {
+                Collection.remove({ "teamId": teamId }, (er) => {
+                    if (!er) {
+                        Request.remove({ "teamId": teamId }, (e) => {
+                            if (!e) {
+                                Env.remove({ "teamId": teamId }, (_err) => {
+                                    if (!_err) {
+                                        MockServer.remove({ "teamId": teamId }, (_er) => {
+                                            if (!er) {
+                                                res.send({ msg: "Team successfully deleted." })
+                                            } else {
+                                                res.send({ error: er })
+                                            }
+                                        })                                        
+                                    } else {
+                                        res.send({ error: _err })
+                                    }
+                                })                                
+                            } else {
+                                res.send({ error: e })
+                            }
+                        })                        
+                    } else {
+                        res.send({ error: er })
+                    }
+                })
+            } else {
+                res.send({ error: err })
+            }
+        })
     },
 
     addUserToTeam: (req, res, next) => {
@@ -95,16 +178,17 @@ module.exports = {
         } = req.body
 
         if (!req.user) {
-            res.send("You must be signed in to perform this operation.")
+            res.send({ error: "You must be signed in to perform this operation." })
             next()
             return
         }
         if (userIdToAdd == undefined || roleOfUserToAdd == undefined || teamId == undefined) {
-            res.send("Error: All fields must be present.")
+            res.send({ error: "Error: All fields must be present." })
             next()
             return
         }
 
+        // check the user does not already exist.
         Team.findById(mongoose.Types.ObjectId(teamId), (err, team) => {
             if (!err) {
                 team.users.push({ role: roleOfUserToAdd, id: userIdToAdd })
@@ -112,13 +196,11 @@ module.exports = {
                     if(!e) {
                         res.send(team)
                     } else {
-                        log(e.toString())
-                        res.send("Error occured while adding user to team.")
+                        res.send({ error: "Error occured while adding user to team." })
                     }
                 })
             } else {
-                log(err.toString())
-                res.send("Error occurred while adding a user to team.")
+                res.send({ error: "Error occurred while adding a user to team." })
             }
         })
     },
@@ -131,13 +213,13 @@ module.exports = {
         } = req.body
 
         if (!req.user) {
-            res.send("You must be signed in to perform this operation.")
+            res.send({ error: "You must be signed in to perform this operation." })
             next()
             return
         }
 
         if (userIdToChangeRole == undefined || roleToChangeTo == undefined || teamId == undefined) {
-            res.send("Error: All fields must be present.")
+            res.send({ error: "Error: All fields must be present." })
             next()
             return
         }
@@ -155,15 +237,12 @@ module.exports = {
                         if (!e) {
                             res.send(team)
                         } else {
-                            log(e.toString())
-                            res.send("Error occured while adding user to team.")
+                            res.send({ error: "Error occured while adding user to team." })
                         }
                     })                    
                 }
-
             } else {
-                log(err.toString())
-                res.send("Error occurred while adding a user to team.")
+                res.send({ error: "Error occurred while adding a user to team." })
             }
         })
     },
@@ -175,13 +254,13 @@ module.exports = {
         } = req.body
 
         if (!req.user) {
-            res.send("You must be signed in to perform this operation.")
+            res.send({ error: "You must be signed in to perform this operation." })
             next()
             return
         }
 
         if (userIdToRemoveFromTeam == undefined || teamId == undefined) {
-            res.send("Error: All fields must be present.")
+            res.send({ error: "Error: All fields must be present." })
             next()
             return
         }
@@ -197,14 +276,12 @@ module.exports = {
                     if (!e) {
                         res.send(team)
                     } else {
-                        log(e.toString())
-                        res.send("Error occured while adding user to team.")
+                        res.send({ error: "Error occured while adding user to team." })
                     }
                 })                    
 
             } else {
-                log(err.toString())
-                res.send("Error occurred while adding a user to team.")
+                res.send({ error: "Error occurred while adding a user to team." })
             }
         })
     },
@@ -219,13 +296,13 @@ module.exports = {
         } = req.body
 
         if (!req.user) {
-            res.send("You must be signed in to perform this operation.")
+            res.send({ error: "You must be signed in to perform this operation." })
             next()
             return
         }
 
         if (collectionName == undefined || teamId == undefined) {
-            res.send("Error: The fields must be complete.")
+            res.send({ error: "Error: The fields must be complete." })
             next()
             return
         }
@@ -234,16 +311,22 @@ module.exports = {
             name: collectionName,
             teamId
         }, (err, collection) => {
+            if(!err) {
                 collection.collectionId = collection._id
                 collection.save()
-                Team.findById(mongoose.Types.ObjectId(teamId), (err, team) => {
-                    if (!err) {
+                Team.findById(mongoose.Types.ObjectId(teamId), (_err, team) => {
+                    if (!_err) {
                         team.collections.push(mongoose.Types.ObjectId(collection._id))
                         team.save()
                         res.send(collection)
                         next()
+                    } else {
+                        res.send({ error: _err })
                     }
                 })
+            } else {
+                res.send({ error: err })
+            }
         })
     },
 
@@ -256,13 +339,13 @@ module.exports = {
         } = req.body
 
         if (!req.user) {
-            res.send("You must be signed in to perform this operation.")
+            res.send({ error: "You must be signed in to perform this operation." })
             next()
             return
         }
 
         if (collectionId == undefined || teamId == undefined) {
-            res.send("Error: The fields must be complete.")
+            res.send({ error: "Error: The fields must be complete." })
             next()
             return
         }
@@ -271,18 +354,27 @@ module.exports = {
             if (!err) {
                 col.remove((err) => {
                     if (!err) {
-                        Team.findById(teamId, (err, team) => {
-                            if (!err) {
+                        Team.findById(teamId, (er, team) => {
+                            if (!er) {
                                 team.collections = team.collections.filter(col => {
                                     return col.collectionId !== collectionId
                                 })
                                 team.save()
-                                res.send(team)
-                                next()
+                                // Delete reqs on coll
+                                Request.remove({"collectionId": collectionId}, (_err) => {
+                                    if(!_err) {
+                                        res.send(team)
+                                        next()
+                                    } else {
+                                        res.send({ error: _err })
+                                    }
+                                })
+                            } else {
+                                res.send({ error: er })
                             }
                         })                        
                     } else {
-                        res.send(err)
+                        res.send({ error: err })
                     }
                 })
             }
@@ -321,13 +413,17 @@ module.exports = {
                                             collection.requests.push(request._id)
                                             collection.save()
                                         } else {
-                                            res.send(_er)
+                                            res.send({ error: _er })
                                         }
                                     })
                                 })
                             }                            
+                        } else {
+                            res.send({ error: _err })
                         }
                     })
+                } else {
+                    res.send({ error: err })
                 }
             })
         })

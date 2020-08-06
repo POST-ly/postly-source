@@ -12,8 +12,18 @@ module.exports = (router) => {
     /**
      * edit a team
      */
-        router
-            .put("/teams/:teamId")
+    router
+        .route("/teams/:teamId")
+        .post(teamCtrl.editTeam)
+
+
+    /**
+     * Delete a team
+     */
+    router
+        .route("/teams/:teamId")
+        .delete(teamCtrl.deleteTeam)
+
 
     // API v1
 

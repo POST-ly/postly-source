@@ -1,0 +1,13 @@
+.authBody {
+    width: 360px;
+}
+
+.authBody input {
+    border-radius: unset;
+}
+
+@media(max-width: 360px) {
+    .authBody {
+        width: 98%;
+    }
+}

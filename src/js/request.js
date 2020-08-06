@@ -470,12 +470,16 @@ function saveRequest(tabId, openModal) {
 
         // check if the request belongs to a collection
         if(!postData[currentTab].collectionId) {
-            // if not display a add to collection modal
+            // if not display add to collection modal
             addToCollection(tabId)
         } else {
             if(!checkTeamIsPersonal()) {
                 // edit request on server
                 axios.post(url + "collection/update/request", getCurrTab()).then(res => {
+                    if(res.data.error) {
+                        displayNotif(res.data.error, { type: "danger" })
+                        return
+                    }
                     refreshCollections()
                 })
             } else {
@@ -488,34 +492,40 @@ function saveRequest(tabId, openModal) {
                 })
             }
         }
-        getHistory(currentTab, (found, data) => {
-            if(found == false) {
-                addHistory({
-                    teamId: postData[currentTab].teamId, 
-                    tabId: postData[currentTab].tabId, 
-                    requestId: postData[currentTab].requestId 
-                }, (done, addedData) => {
-                    if(done == true) {
-                        //log("Added Data:", addedData)
-                    }
-                })
-            } else {
-                // update record
-                updateHistory({
-                    teamId: postData[currentTab].teamId, 
-                    tabId: postData[currentTab].tabId, 
-                    requestId: postData[currentTab].requestId                     
-                }, (done, updateData) => {
-                    if(done == true) {
-                        //log("Updated Data:", updateData)
-                    }
-                })
-            }
-            window[`${currentTab}TabName`].innerHTML = postData[currentTab].name
-            window[`${currentTab}TabMethod`].innerHTML = postData[currentTab].methodType
 
-            refreshHistoryTab()
-        })
+        // add to history
+        if (checkTeamIsPersonal()) {
+            getHistory(currentTab, (found, data) => {
+                if (found == false) {
+                    addHistory({
+                        teamId: postData[currentTab].teamId,
+                        tabId: postData[currentTab].tabId,
+                        requestId: postData[currentTab].requestId
+                    }, (done, addedData) => {
+                        if (done == true) {
+                            //log("Added Data:", addedData)
+                        }
+                    })
+                } else {
+                    // update record
+                    updateHistory({
+                        teamId: postData[currentTab].teamId,
+                        tabId: postData[currentTab].tabId,
+                        requestId: postData[currentTab].requestId
+                    }, (done, updateData) => {
+                        if (done == true) {
+                            //log("Updated Data:", updateData)
+                        }
+                    })
+                }
+                window[`${currentTab}TabName`].innerHTML = postData[currentTab].name
+                window[`${currentTab}TabMethod`].innerHTML = postData[currentTab].methodType
+
+                refreshHistoryTab()
+            })
+        } else {
+            // network
+        }
     }
 }
 
@@ -567,20 +577,66 @@ function saveRequestUrlName(evt) {
     }
     */
 
-    if(!checkTeamIsPersonal()) {
-        // edit request on server
-        axios.post(url + "/collection/update/request", getCurrTab())
-            .then(res => {
+    if (!checkTeamIsPersonal()) {
+        var currTab = getCurrTab()
+        if (!currTab.requestId) {
+            // check a collection is selected.
+            if (!currTab.collectionId) {
+                displayNotif("Please, select a collection.", {type: "danger"})
                 evt.target.innerText = "Save"
                 evt.target.removeAttribute("disabled")
-                modalRequestError.innerHTML = ""
-                modalRequestError.classList.add("close")
-                requestUrlName.value = ""
-                refreshCollections()
-                window[`${currentTab}TabName`].innerHTML = requestName
-                window[`${currentTab}TabMethod`].innerHTML = postData[currentTab].methodType
-                closeActiveModals()
-            })
+                return;
+            }
+
+            // add as new request
+            // post to network
+            axios.post(url + "/collection/add/request/" + currTab.collectionId, currTab)
+                .then(res => {
+                    evt.target.innerText = "Save"
+                    evt.target.removeAttribute("disabled")
+                    if(res.data.error) {
+                        displayNotif(res.data.error, { type: "danger" })
+                        return
+                    }
+                    refreshCollections()
+                    var addedReq = res.data
+                    currTab.requestId = addedReq.requestId
+
+                    modalRequestError.innerHTML = ""
+                    modalRequestError.classList.add("close")
+                    requestUrlName.value = ""
+                    window[`${currentTab}TabName`].innerHTML = requestName
+                    window[`${currentTab}TabMethod`].innerHTML = currTab.methodType
+
+                    closeActiveModals()
+                    displayNotif("Successfully added request to collection", { type: "success" })
+                }).catch(err => {
+                    evt.target.innerText = "Save"
+                    evt.target.removeAttribute("disabled")
+                    displayNotif("Error occured while adding request to collection", { type: "danger" })
+                })
+        } else {
+            // edit request on server
+            axios.post(url + "/collection/update/request", currTab)
+                .then(res => {
+                    evt.target.innerText = "Save"
+                    evt.target.removeAttribute("disabled")
+                    if(res.data.error) {
+                        displayNotif(res.data.error, { type: "danger" })
+                        return
+                    }
+                    modalRequestError.innerHTML = ""
+                    modalRequestError.classList.add("close")
+                    requestUrlName.value = ""
+                    refreshCollections()
+                    window[`${currentTab}TabName`].innerHTML = requestName
+                    window[`${currentTab}TabMethod`].innerHTML = postData[currentTab].methodType
+                    closeActiveModals()
+                }).catch(err => {
+                    evt.target.innerText = "Save"
+                    evt.target.removeAttribute("disabled")
+                })            
+        }     
     } else {
         setReqColId()
         updateRequest(postData[currentTab], (doneReqUpdate, res) => {
@@ -601,35 +657,39 @@ function saveRequestUrlName(evt) {
     }
 
     // update and refresh history
-    getHistory(currentTab, (found, data) => {
-        if(found == false) {
-            // log("Adding history")
-            addHistory({
-                    teamId: postData[currentTab].teamId, 
-                    tabId: postData[currentTab].tabId, 
-                    requestId: postData[currentTab].requestId 
-            }, (done, addedData) => {
-                    if(done == true) {
+    if (checkTeamIsPersonal()) {
+        getHistory(currentTab, (found, data) => {
+            if (found == false) {
+                // log("Adding history")
+                addHistory({
+                    teamId: postData[currentTab].teamId,
+                    tabId: postData[currentTab].tabId,
+                    requestId: postData[currentTab].requestId
+                }, (done, addedData) => {
+                    if (done == true) {
                         // log("Added Data:", updateData)
                     }
                 })
-        } else {
-            // update record
-            // log("Updating history")
-            updateHistory({
-                    teamId: postData[currentTab].teamId, 
-                    tabId: postData[currentTab].tabId, 
-                    requestId: postData[currentTab].requestId 
-            }, (done, updateData) => {
-                    if(done == true) {
+            } else {
+                // update record
+                // log("Updating history")
+                updateHistory({
+                    teamId: postData[currentTab].teamId,
+                    tabId: postData[currentTab].tabId,
+                    requestId: postData[currentTab].requestId
+                }, (done, updateData) => {
+                    if (done == true) {
                         // log("Updated Data:", updateData)
                     }
                 })
-        }
-        window[`${currentTab}TabName`].innerHTML = requestName
-        window[`${currentTab}TabMethod`].innerHTML = postData[currentTab].methodType
-        refreshHistoryTab()
-    })
+            }
+            window[`${currentTab}TabName`].innerHTML = requestName
+            window[`${currentTab}TabMethod`].innerHTML = postData[currentTab].methodType
+            refreshHistoryTab()
+        })
+    } else {
+        // network
+    }
 }
 
 function collectAllRequestData(tabId) {

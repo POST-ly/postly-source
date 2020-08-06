@@ -32,7 +32,7 @@ function viewMockServersModal(event) {
             }
         })        
     } else {
-        axsio.get(url + "mockServers/team/" + currentTeam.id).then(res => {
+        axios.get(url + "mockServers/team/" + currentTeam.id).then(res => {
             mockServersHtml = ""
             mockServers.forEach(mS => {
                 var buttonHtmlStr = `<button onclick="return setAsActiveMockServer(event, '${mS.mockServerId}')">Activate</button>`
