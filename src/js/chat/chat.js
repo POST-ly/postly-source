@@ -184,7 +184,3 @@ function sendTeamMsg(event) {
     })
 }
 
-/*
-mongoexport -h ds237855.mlab.com:37855 -d alc -c users -u nnamdi -p mlab1992 -o users.json
-mongo ds237855.mlab.com:37855/alc -u nnamdi -p mlab1992
-*/
