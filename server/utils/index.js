@@ -1,4 +1,7 @@
 const bcrypt = require("bcrypt")
+const mongoose = require("mongoose")
+const Team = require('./../models/Team')
+
 const log = console.log
 
 /**
@@ -37,10 +40,42 @@ const hashPassword = async (password) => {
     return hashed
 }
 
+/**
+*   userID - The id of the user to check for privs .
+*   teamId - The id of the team to lookup user privs.
+*   privsToAllow - array that contains the privs to be allowed.
+*/
+function checkPrivs(userId, teamId, privsToAllow) {
+    if (!privsToAllow)
+        return new Error("priveleges to allow must be defined.")
+
+    // check the user has privs to delete a team
+    userId = mongoose.Types.ObjectId(userId)
+
+    Team.findById(teamId, (foundErr, foundTeam) => {
+        if (!foundErr) {
+            const user = foundTeam.users.find(u => u.id == userId)
+            if (user) {
+                const userRole = user.role
+                if (privsToAllow.indexOf(userRole) !== -1) {
+                    return true
+                } else {
+                    return false
+                }
+            } else {
+                return false
+            }
+        } else {
+            return false
+        }
+    })
+}
+
 module.exports = {
     getItems,
     validateJWT,
     generateJWT,
     passwordEncrypt,
-    hashPassword
+    hashPassword,
+    checkPrivs
 }

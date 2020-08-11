@@ -209,10 +209,12 @@ function selectTeam(teamId, teamName) {
         getFromWindow("currentTeamDisplay").innerText = teamName
         location.reload()
     } else {
+        /*
         if (!IsUserAuth()) {
             displayNotif("Please, You must sign in before selecting this team.", {type: "danger"})
             return
         }
+        */
         localStorage.setItem("currentTeam", JSON.stringify({ id: teamId, name: teamName }))
         getFromWindow("currentTeamDisplay").innerText = teamName
         location.reload()

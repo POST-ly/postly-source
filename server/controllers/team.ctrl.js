@@ -1,12 +1,12 @@
 /** */
 const mongoose = require("mongoose")
 
-const User = require('./../models/User')
 const Team = require('./../models/Team')
 const Collection = require("./../models/Collection")
 const Request = require("./../models/Request")
 const Env = require("./../models/Env")
-const collectionCtrl = require("./collection.ctrl")
+
+const { checkPrivs } = require("./../utils")
 
 const log = console.log
 
@@ -121,55 +121,126 @@ module.exports = {
     },
 
     editTeam: (req, res, next) => {
+        if (!req.user) {
+            res.send({ error: "You must be signed to edit this Team." })
+            next()
+            return
+        }
 
+        const { 
+            name
+        } = req.body
+
+        const teamId = req.params.teamId
+
+        // check the user has privs to edit a team
+        const userId = mongoose.Types.ObjectId(req.user.id)
+
+        Team.findById(teamId, (foundErr, foundTeam) => {
+            if (!foundErr) {
+                const user = foundTeam.users.find(u => u.id.toString() == userId.toString())
+                if (user) {
+                    if (user.role == "owner" || user.role == "admin") {
+                        Team.findById(mongoose.Types.ObjectId(teamId), (err, fndTeam) => {
+                            if(!err) {
+                                fndTeam.name = name
+                                fndTeam.save((er, svdTeam) => {
+                                    if(!er) {
+                                    res.send(svdTeam)
+                                    } else {
+                                        res.send({ error: er })
+                                    }
+                                })
+                            } else {
+                                res.send({ error: er })
+                            }                         
+                        })
+                    } else {
+                        res.send({ error: "You have no privileges to perform this action." })
+                    }
+                } else {
+                    res.send({ error: "User not found in team." })
+                }
+            } else {
+                res.send({ error: "Team is not found." })
+            }
+        })
     },
     
     deleteTeam: (req, res, next) => {
+        if (!req.user) {
+            res.send({ error: "You must be signed to create a Team." })
+            next()
+            return
+        }
+
         const teamId = req.params.teamId
 
-        // Delete team.
-        // delete all collections on teams.
-        // delete all requests on collections.
-        // delete all envs in the team
-        // delete all mockservers in the team
-        // remove users on team
+        if (!checkPrivs(req.user.id, teamId, ["owner"])) {
+            res.send({ error: "You have no privileges to perform this action." })
+            return
+        }
+        
+        // check the user has privs to delete a team
+        const userId = mongoose.Types.ObjectId(req.user.id)
 
-        Team.remove({ "id": teamId }, (err) => {
-            if (!err) {
-                Collection.remove({ "teamId": teamId }, (er) => {
-                    if (!er) {
-                        Request.remove({ "teamId": teamId }, (e) => {
-                            if (!e) {
-                                Env.remove({ "teamId": teamId }, (_err) => {
-                                    if (!_err) {
-                                        MockServer.remove({ "teamId": teamId }, (_er) => {
-                                            if (!er) {
-                                                res.send({ msg: "Team successfully deleted." })
+        Team.findOne({ "users.id": userId }, (foundErr, foundTeam) => {
+            if (!foundErr) {
+                const user = foundTeam.users.find(u => u.id == userId)
+                if (user) {
+                    if (user.role == "owner") {
+                        // Delete team.
+                        // delete all collections on teams.
+                        // delete all requests on collections.
+                        // delete all envs in the team
+                        // delete all mockservers in the team
+                        // remove users on team
+
+                        Team.remove({ "id": teamId }, (err) => {
+                            if (!err) {
+                                Collection.remove({ "teamId": teamId }, (er) => {
+                                    if (!er) {
+                                        Request.remove({ "teamId": teamId }, (e) => {
+                                            if (!e) {
+                                                Env.remove({ "teamId": teamId }, (_err) => {
+                                                    if (!_err) {
+                                                        MockServer.remove({ "teamId": teamId }, (_er) => {
+                                                            if (!er) {
+                                                                res.send({ msg: "Team successfully deleted." })
+                                                            } else {
+                                                                res.send({ error: er })
+                                                            }
+                                                        })
+                                                    } else {
+                                                        res.send({ error: _err })
+                                                    }
+                                                })
                                             } else {
-                                                res.send({ error: er })
+                                                res.send({ error: e })
                                             }
-                                        })                                        
+                                        })
                                     } else {
-                                        res.send({ error: _err })
+                                        res.send({ error: er })
                                     }
-                                })                                
+                                })
                             } else {
-                                res.send({ error: e })
+                                res.send({ error: err })
                             }
-                        })                        
+                        })                      
                     } else {
-                        res.send({ error: er })
-                    }
-                })
+                        res.send({ error: "You have no privileges to perform this action." })
+                  }
+                } else {
+                    res.send({ error: "User not found." })
+                }                
             } else {
-                res.send({ error: err })
+                res.send({ error: foundErr })
             }
         })
     },
 
     addUserToTeam: (req, res, next) => {
         // TODO: check if the user adding the user has privs.
-        // TODO: check if the userToAdd is already on the team.
 
         const {
             userIdToAdd,
@@ -182,6 +253,12 @@ module.exports = {
             next()
             return
         }
+
+        if (!checkPrivs(req.user.id, teamId, ["owner", "admin"])) {
+            res.send({ error: "You have no privileges to perform this action." })
+            return
+        }
+
         if (userIdToAdd == undefined || roleOfUserToAdd == undefined || teamId == undefined) {
             res.send({ error: "Error: All fields must be present." })
             next()
@@ -191,14 +268,20 @@ module.exports = {
         // check the user does not already exist.
         Team.findById(mongoose.Types.ObjectId(teamId), (err, team) => {
             if (!err) {
-                team.users.push({ role: roleOfUserToAdd, id: userIdToAdd })
-                team.save((e, team) => {
-                    if(!e) {
-                        res.send(team)
-                    } else {
-                        res.send({ error: "Error occured while adding user to team." })
-                    }
-                })
+                // TODO: check if the userToAdd is already on the team.
+                const fndUser = team.users.find(u => u.id == userIdToAdd)
+                if (!fndUser) {
+                    team.users.push({ role: roleOfUserToAdd, id: userIdToAdd })
+                    team.save((e, team) => {
+                        if (!e) {
+                            res.send(team)
+                        } else {
+                            res.send({ error: "Error occured while adding user to team." })
+                        }
+                    })                    
+                } else {
+                    res.send({ error: "USer already exist on the team." })
+                }
             } else {
                 res.send({ error: "Error occurred while adding a user to team." })
             }
@@ -215,6 +298,11 @@ module.exports = {
         if (!req.user) {
             res.send({ error: "You must be signed in to perform this operation." })
             next()
+            return
+        }
+
+        if (!checkPrivs(req.user.id, teamId, ["owner", "admin"])) {
+            res.send({ error: "You have no privileges to perform this action." })
             return
         }
 
@@ -259,6 +347,11 @@ module.exports = {
             return
         }
 
+        if (!checkPrivs(req.user.id, teamId, ["owner", "admin"])) {
+            res.send({ error: "You have no privileges to perform this action." })
+            return
+        }
+
         if (userIdToRemoveFromTeam == undefined || teamId == undefined) {
             res.send({ error: "Error: All fields must be present." })
             next()
@@ -298,6 +391,11 @@ module.exports = {
         if (!req.user) {
             res.send({ error: "You must be signed in to perform this operation." })
             next()
+            return
+        }
+
+        if (!checkPrivs(req.user.id, teamId, ["owner", "admin"])) {
+            res.send({ error: "You have no privileges to perform this action." })
             return
         }
 
@@ -344,6 +442,11 @@ module.exports = {
             return
         }
 
+        if (!checkPrivs(req.user.id, teamId, ["owner", "admin"])) {
+            res.send({ error: "You have no privileges to perform this action." })
+            return
+        }
+
         if (collectionId == undefined || teamId == undefined) {
             res.send({ error: "Error: The fields must be complete." })
             next()
@@ -383,6 +486,17 @@ module.exports = {
 
     importCollection: (req, res, next) => {
         const col = req.body
+
+        if (!req.user) {
+            res.send({ error: "You must be signed in to perform this operation." })
+            next()
+            return
+        }
+
+        if (!checkPrivs(req.user.id, col.teamId, ["owner", "admin"])) {
+            res.send({ error: "You have no privileges to perform this action." })
+            return
+        }
 
         Collection.create({
             name: col.collectionName,
@@ -429,4 +543,3 @@ module.exports = {
         })
     }
 }
-

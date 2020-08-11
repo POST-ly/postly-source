@@ -2,7 +2,9 @@ const mongoose = require("mongoose")
 /** */
 const Collection = require('./../models/Collection')
 const Request = require("./../models/Request")
-const Team = require("./../models/Team")
+
+const { checkPrivs } = require("./../utils")
+
 const log = console.log
 
 module.exports = {
@@ -25,32 +27,58 @@ module.exports = {
 
     // Create a new Request and add it to a Collection.
     addNewRequest: (req, res, next) => {
+        if (!req.user) {
+            res.send({ error: "You must be signed to edit this request." })
+            next()
+            return
+        }
+
         var colId = mongoose.Types.ObjectId(req.params.collectionId)
         // collectionId
-        // 
-        Request.create(req.body, (err, request) => {
-            if (!err) {
-                request.requestId = request._id
-                request.collectionId = colId
-                request.save()
 
-                Collection.findById(colId, (er, col) => {
-                    col.requests.push(request._id)
-                    col.save()
-                })
-                if (!er) {
-                    res.send(request)
-                } else {
-                    res.send({ error: er })
+        // make collection exists and user has privs
+        Collection.findById(colId, (colErr, col) => {
+            if (!colErr) {
+
+                // check for privs
+                if (!checkPrivs(req.user.id, col.teamId, ["owner", "admin"])) {
+                    res.send({ error: "You have no privileges to perform this action." })
+                    return
                 }
+
+                Request.create(req.body, (err, request) => {
+                    if (!err) {
+                        request.requestId = request._id
+                        request.collectionId = colId
+                        request.save()
+
+                        Collection.findById(colId, (er, col) => {
+                            col.requests.push(request._id)
+                            col.save()
+                        })
+                        if (!er) {
+                            res.send(request)
+                        } else {
+                            res.send({ error: er })
+                        }
+                    } else {
+                        res.send({ error: err })
+                    }
+                })                
             } else {
-                res.send({ error: err })
+                res.send({ error: colErr })
             }
         })
     },
 
     // Update a Request.
     updateRequest: (req, res, next) => {
+        if (!req.user) {
+            res.send({ error: "You must be signed to edit this request." })
+            next()
+            return
+        }
+
         const {
             url,
             methodType,
@@ -67,6 +95,13 @@ module.exports = {
         Request.findById(req.body.requestId, (err, request) => {
 
             if (!err) {
+
+                // check for privs
+                if (!checkPrivs(req.user.id, request.teamId, ["owner", "admin"])) {
+                    res.send({ error: "You have no privileges to perform this action." })
+                    return
+                }
+
                 request.url = url
                 request.methodType = methodType
                 request.body = body
@@ -93,6 +128,12 @@ module.exports = {
 
     // Update collection
     updateCollection: (req, res) => {
+        if (!req.user) {
+            res.send({ error: "You must be signed to edit this collection." })
+            next()
+            return
+        }
+
         const {
             name,
             variables,
@@ -103,6 +144,13 @@ module.exports = {
 
         Collection.findById(mongoose.Types.ObjectId(req.body.collectionId), (err, col) => {
             if (!err) {
+
+                // check for privs
+                if (!checkPrivs(req.user.id, col.teamId, ["owner", "admin"])) {
+                    res.send({ error: "You have no privileges to perform this action." })
+                    return
+                }
+
                 col.name = name
                 col.variables = variables
                 col.tests = tests
@@ -123,6 +171,12 @@ module.exports = {
 
     // Delete a Request.
     deleteRequest: (req, res, next) => {
+        if (!req.user) {
+            res.send({ error: "You must be signed to delete this request ." })
+            next()
+            return
+        }
+
         var reqId = req.body.requestId
         Request.findById(reqId, (err, request) => {
             if(!err) {
@@ -132,11 +186,23 @@ module.exports = {
                 Collection.find({ "requests": mongoose.Types.ObjectId(reqId) })
                     .exec((er, cols) => {
                         if(!er) {
+                            // check for privs
+                            if (!checkPrivs(req.user.id, cols.teamId, ["owner", "admin"])) {
+                                res.send({ error: "You have no privileges to perform this action." })
+                                return
+                            }
+
                             cols.requests = cols.requests.filter(req => {
                                 return req !== reqId
                             })
-                            cols.save()
-                            res.send(request)
+
+                            cols.save((svdColErr, svdCol) => {
+                                if (!svdColErr) {
+                                    res.send(request)                                    
+                                } else {
+                                    res.send({ error: svdColErr })
+                                }
+                            })
                         } else {
                             res.send({ error: er })
                         }
@@ -148,15 +214,35 @@ module.exports = {
     },
 
     renameCollection: (req, res, next) => {
+        // check the user is authorized.
+        if (!req.user) {
+            res.send({ error: "You must be signed to edit this Team." })
+            next()
+            return
+        }
+
         const {
             collectionId,
             collectionName
         } = req.body
+
         Collection.findById(collectionId, (err, collection) => {
             if (!err) {
+
+                // check for privs
+                if (!checkPrivs(req.user.id, collection.teamId, ["owner", "admin"])) {
+                    res.send({error: "You have no privileges to perform this action."})
+                    return
+                }
+
                 collection.name = collectionName
-                collection.save()
-                res.send(collection)                
+                collection.save((svErr, svCol) => {
+                    if (!svErr) {
+                        res.send(collection)                                        
+                    } else {
+                        res.send({ error: svErr })
+                    }
+                })
             } else {
                 res.send({ error: err })
             }

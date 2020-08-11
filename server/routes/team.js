@@ -13,7 +13,7 @@ module.exports = (router) => {
      * edit a team
      */
     router
-        .route("/teams/:teamId")
+        .route("/teams/edit/:teamId")
         .post(teamCtrl.editTeam)
 
 
