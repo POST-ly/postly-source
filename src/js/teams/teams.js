@@ -135,11 +135,24 @@ function addToTeam(event) {
     })
 }
 
+function renderTeamsList(tms) {
+        var htmlStr = `
+            <li><a onclick="return selectTeam('personal', 'Personal')">Personal</a></li>
+        `
+        if (tms.length > 1) {
+            for (let index = 0; index < 2; index++) {
+                const team = tms[index];
+                htmlStr += `<li><a onclick="return selectTeam('${team.teamId}', '${team.name}')">${team.name}</a></li>`
+            }
+        } else {
+            const team = tms[0];
+            htmlStr += `<li><a onclick="return selectTeam('${team.teamId}', '${team.name}')">${team.name}</a></li>`
+        }
+        teamsList.innerHTML = htmlStr
+}
+
 // This will fetch all the teams the user belongs to
 function loadTeams() {
-        var htmlStr = `
-        <li><a onclick="return selectTeam('personal', 'Personal')">Personal</a></li>
-    `
         // load teams
         axios.get(url + "teams/user").then((res) => {
             if(res.data.error) {
@@ -147,18 +160,8 @@ function loadTeams() {
                 displayNotif(res.data.error, { type: "danger" })
                 return
             }
-            var _teams = res.data
-            teams = _teams
-            if (_teams.length > 1) {
-                for (let index = 0; index < 2; index++) {
-                    const team = _teams[index];
-                    htmlStr += `<li><a onclick="return selectTeam('${team.teamId}', '${team.name}')">${team.name}</a></li>`
-                }
-            } else {
-                const team = _teams[0];
-                htmlStr += `<li><a onclick="return selectTeam('${team.teamId}', '${team.name}')">${team.name}</a></li>`
-            }
-            teamsList.innerHTML = htmlStr
+            teams = res.data
+            renderTeamsList(teams)
         }).catch(e => {
             displayNotif("Error occured while loading your teams.", { type: "danger" })
         })

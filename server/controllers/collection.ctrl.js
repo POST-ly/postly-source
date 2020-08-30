@@ -54,13 +54,14 @@ module.exports = {
 
                         Collection.findById(colId, (er, col) => {
                             col.requests.push(request._id)
-                            col.save()
+                            col.save((e, svdCol) => {
+                                if (!e) {
+                                    res.send(request)
+                                } else {
+                                    res.send({ error: e })
+                                }
+                            })
                         })
-                        if (!er) {
-                            res.send(request)
-                        } else {
-                            res.send({ error: er })
-                        }
                     } else {
                         res.send({ error: err })
                     }

@@ -332,6 +332,7 @@ function changeUserRole(evt, userId) {
         roleToChangeTo: role
     }
 
+    /*
     setTimeout(() => {
         displayNotif(JSON.stringify(data, null, "\t"))        
         targ.removeAttribute("disabled", null)
@@ -339,6 +340,7 @@ function changeUserRole(evt, userId) {
         renderOverlay.goBack(new Event("click"))
     }, 1500);
     return
+    */
 
     axios.post(url + "/team/user/change/role", data).then(res => {
         targ.removeAttribute("disabled", null)
@@ -398,7 +400,28 @@ function renameTeam(evt, teamId) {
             return 
         }
         displayNotif("Team successfully renamed.", { type: "success" })
-        loadTeams()
+
+        var team = teams.find(team => team.teamId == teamId)
+        if(team) {
+            team.name = teamName
+        }
+
+        // TODO: if the renamed team is the currentTeam, refresh the localstorage "currentTeam"
+        if(currentTeam.id == teamId) {
+            localStorage.setItem("currentTeam", JSON.stringify({
+                id: teamId,
+                name: teamName
+            }))            
+        }
+
+        currentTeam = {
+            id: teamId,
+            name: teamName
+        }
+
+        getFromWindow("currentTeamDisplay").innerText = teamName
+        renderTeamsList(teams)
+
         getFromWindow("renderAllTeamsNode").innerHTML = renderAllTeams()
         renderOverlay.goBack(new Event("click"))
     }).catch(err => {
@@ -413,6 +436,7 @@ function removeUser(event, userId) {
     if (confirm("Do you really wish to remove this user?")) {
         w.classList.remove("close")
 
+        /*
         setTimeout(() => {
             displayNotif(JSON.stringify({
                 userIdToRemoveFromTeam: userId,
@@ -421,6 +445,7 @@ function removeUser(event, userId) {
             w.classList.add("close")            
         }, 1000);
         return
+        */
 
         axios.post(url + "/team/remove/user", {
             userIdToRemoveFromTeam: userId,
@@ -437,6 +462,11 @@ function removeUser(event, userId) {
 }
 
 function deleteTeam(teamId) {
+
+    // TODO: Actions to perform after successful team deletion.
+    // If the currentTeam is the team deleted, select the next team and load, if not load the personal team.
+    // If the deleted team is not the current team, reload the teams array.
+
     var w = getFromWindow("wait" + teamId)
     if (confirm("Dou you really wish to delete this team?")) {
         w.classList.remove("close")
@@ -456,7 +486,22 @@ function deleteTeam(teamId) {
                 displayNotif(res.data.error, { type: "danger" })
                 return
             }
-            loadTeams()
+            teams = teams.filter(team => team.teamId !== teamId)
+
+            if(currentTeam.id == teamId) {
+                if(teams.length == 0) {
+                    // load "personal"
+                    selectTeam("personal", "Personal")
+                } else {
+                    const team = teams[0]
+                    selectTeam(team.teamId, team.name)
+                }
+            }
+
+            // loadTeams()
+
+            renderTeamsList()
+
             getFromWindow("renderAllTeamsNode").innerHTML = renderAllTeam()
         }).catch(err => {
             w.classList.add("close")
@@ -474,6 +519,7 @@ function addUserToTeam(event, userId) {
         roleOfUserToAdd: "viewer",
         teamId: currentTeam.id
     }
+    /*
     setTimeout(() => {
         loadTeams()
         getFromWindow("renderTeamMembersNode").innerHTML = renderTeamMembers()
@@ -486,6 +532,8 @@ function addUserToTeam(event, userId) {
         targ.removeEventListener("click", null)
     }, 1500);
     return
+    */
+
     axios.post(url + "/team/add/user", data).then(res => {
         loadTeams()
         getFromWindow("renderTeamMembersNode").innerHTML = renderTeamMembers()
@@ -501,6 +549,3 @@ function addUserToTeam(event, userId) {
         targ.innerHTML = "Add User"
     })
 }
-
-
-
