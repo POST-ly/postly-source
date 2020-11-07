@@ -4,6 +4,7 @@ const Collection = require('./../models/Collection')
 const Request = require("./../models/Request")
 
 const { checkPrivs } = require("./../utils")
+const Team = require("../models/Team")
 
 const log = console.log
 
@@ -28,7 +29,7 @@ module.exports = {
     // Create a new Request and add it to a Collection.
     addNewRequest: (req, res, next) => {
         if (!req.user) {
-            res.send({ error: "You must be signed to edit this request." })
+            res.send({ error: "You must be signed in to edit this request." })
             next()
             return
         }
@@ -37,45 +38,45 @@ module.exports = {
         // collectionId
 
         // make collection exists and user has privs
-        Collection.findById(colId, (colErr, col) => {
-            if (!colErr) {
+        Collection.findById(colId)
+            .populate("teamId")
+            .exec((colErr, col) => {
+                if (!colErr) {
+                    // check for privs
+                    if (checkPrivs(req.user.id, col.teamId, ["owner", "admin"])) {
+                        Request.create(req.body, (err, request) => {
+                            if (!err) {
+                                request.requestId = request._id
+                                request.collectionId = colId
+                                request.save()
 
-                // check for privs
-                if (!checkPrivs(req.user.id, col.teamId, ["owner", "admin"])) {
-                    res.send({ error: "You have no privileges to perform this action." })
-                    return
-                }
-
-                Request.create(req.body, (err, request) => {
-                    if (!err) {
-                        request.requestId = request._id
-                        request.collectionId = colId
-                        request.save()
-
-                        Collection.findById(colId, (er, col) => {
-                            col.requests.push(request._id)
-                            col.save((e, svdCol) => {
-                                if (!e) {
-                                    res.send(request)
-                                } else {
-                                    res.send({ error: e })
-                                }
-                            })
-                        })
+                                Collection.findById(colId, (er, col) => {
+                                    col.requests.push(request._id)
+                                    col.save((e, svdCol) => {
+                                        if (!e) {
+                                            res.send(request)
+                                        } else {
+                                            res.send({ error: e })
+                                        }
+                                    })
+                                })
+                            } else {
+                                res.send({ error: err })
+                            }
+                        })                
                     } else {
-                        res.send({ error: err })
+                        res.send({ error: "You have no privileges to perform this action." })
                     }
-                })                
-            } else {
-                res.send({ error: colErr })
-            }
+                } else {
+                    res.send({ error: colErr })
+                }
         })
     },
 
     // Update a Request.
     updateRequest: (req, res, next) => {
         if (!req.user) {
-            res.send({ error: "You must be signed to edit this request." })
+            res.send({ error: "You must be signed in to edit this request." })
             next()
             return
         }
@@ -93,37 +94,39 @@ module.exports = {
             variables
         } = req.body
 
-        Request.findById(req.body.requestId, (err, request) => {
+        Request.findById(req.body.requestId)
+            .populate("teamId")
+            .exec((err, request) => {
 
-            if (!err) {
+                if (!err) {
 
-                // check for privs
-                if (!checkPrivs(req.user.id, request.teamId, ["owner", "admin"])) {
-                    res.send({ error: "You have no privileges to perform this action." })
-                    return
-                }
-
-                request.url = url
-                request.methodType = methodType
-                request.body = body
-                request.params=params
-                request.name=name
-                request.headers=headers
-                request.tests = tests
-                request.prerequest = prerequest
-                request.visualizer=visualizer
-                request.variables = variables
-
-                request.save((er, savedReq) => {
-                    if (!er) {
-                        res.send(savedReq)
-                    } else {
-                        res.send({ error: "Error occured when updating request" })
+                    // check for privs
+                    if (!checkPrivs(req.user.id, request.teamId, ["owner", "admin"])) {
+                        res.send({ error: "You have no privileges to perform this action." })
+                        return
                     }
-                })                
-            } else {
-                res.send({ error: err })
-            }
+
+                    request.url = url
+                    request.methodType = methodType
+                    request.body = body
+                    request.params = params
+                    request.name = name
+                    request.headers = headers
+                    request.tests = tests
+                    request.prerequest = prerequest
+                    request.visualizer = visualizer
+                    request.variables = variables
+
+                    request.save((er, savedReq) => {
+                        if (!er) {
+                            res.send(savedReq)
+                        } else {
+                            res.send({ error: "Error occured when updating request" })
+                        }
+                    })                
+                } else {
+                    res.send({ error: err })
+                }
         })        
     },
 
@@ -143,30 +146,32 @@ module.exports = {
             authorization
         } = req.body
 
-        Collection.findById(mongoose.Types.ObjectId(req.body.collectionId), (err, col) => {
-            if (!err) {
+        Collection.findById(mongoose.Types.ObjectId(req.body.collectionId))
+            .populate("teamId")
+            .exec((err, col) => {
+                if (!err) {
 
-                // check for privs
-                if (!checkPrivs(req.user.id, col.teamId, ["owner", "admin"])) {
-                    res.send({ error: "You have no privileges to perform this action." })
-                    return
-                }
-
-                col.name = name
-                col.variables = variables
-                col.tests = tests
-                col.prerequest = prerequest
-                col.authorization = authorization
-                col.save((_err, updatedCol) => {
-                    if (!_err) {
-                        res.send(updatedCol)
-                    } else {
-                        res.send({ error:  _err })
+                    // check for privs
+                    if (!checkPrivs(req.user.id, col.teamId, ["owner", "admin"])) {
+                        res.send({ error: "You have no privileges to perform this action." })
+                        return
                     }
-                })
-            } else {
-                res.send({ error: err })
-            }
+
+                    col.name = name
+                    col.variables = variables
+                    col.tests = tests
+                    col.prerequest = prerequest
+                    col.authorization = authorization
+                    col.save((_err, updatedCol) => {
+                        if (!_err) {
+                            res.send(updatedCol)
+                        } else {
+                            res.send({ error:  _err })
+                        }
+                    })
+                } else {
+                    res.send({ error: err })
+                }
         })
     },
 
@@ -179,38 +184,46 @@ module.exports = {
         }
 
         var reqId = req.body.requestId
-        Request.findById(reqId, (err, request) => {
-            if(!err) {
-                request.remove()
+        Request.findById(reqId)
+            .populate("teamId")
+            .exec((err, request) => {
+                if(!err) {
+                    // check for privs
+                    if (!checkPrivs(req.user.id, cols.teamId, ["owner", "admin"])) {
+                        res.send({ error: "You have no privileges to perform this action." })
+                        return
+                    }
 
-                // remove request from collection "requests" array.
-                Collection.find({ "requests": mongoose.Types.ObjectId(reqId) })
-                    .exec((er, cols) => {
-                        if(!er) {
-                            // check for privs
-                            if (!checkPrivs(req.user.id, cols.teamId, ["owner", "admin"])) {
-                                res.send({ error: "You have no privileges to perform this action." })
-                                return
-                            }
+                    request.remove()
 
-                            cols.requests = cols.requests.filter(req => {
-                                return req !== reqId
-                            })
-
-                            cols.save((svdColErr, svdCol) => {
-                                if (!svdColErr) {
-                                    res.send(request)                                    
-                                } else {
-                                    res.send({ error: svdColErr })
+                    // remove request from collection "requests" array.
+                    Collection.find({ "requests": mongoose.Types.ObjectId(reqId) })
+                        .exec((er, cols) => {
+                            if(!er) {
+                                // check for privs
+                                if (!checkPrivs(req.user.id, cols.teamId, ["owner", "admin"])) {
+                                    res.send({ error: "You have no privileges to perform this action." })
+                                    return
                                 }
-                            })
-                        } else {
-                            res.send({ error: er })
-                        }
-                })
-            } else {
-                res.send({ error: err })
-            }
+
+                                cols.requests = cols.requests.filter(req => {
+                                    return req !== reqId
+                                })
+
+                                cols.save((svdColErr, svdCol) => {
+                                    if (!svdColErr) {
+                                        res.send(request)                                    
+                                    } else {
+                                        res.send({ error: svdColErr })
+                                    }
+                                })
+                            } else {
+                                res.send({ error: er })
+                            }
+                    })
+                } else {
+                    res.send({ error: err })
+                }
         })
     },
 
@@ -227,26 +240,28 @@ module.exports = {
             collectionName
         } = req.body
 
-        Collection.findById(collectionId, (err, collection) => {
-            if (!err) {
+        Collection.findById(collectionId)
+            .populate("teamId")
+            .exec((err, collection) => {
+                if (!err) {
 
-                // check for privs
-                if (!checkPrivs(req.user.id, collection.teamId, ["owner", "admin"])) {
-                    res.send({error: "You have no privileges to perform this action."})
-                    return
-                }
-
-                collection.name = collectionName
-                collection.save((svErr, svCol) => {
-                    if (!svErr) {
-                        res.send(collection)                                        
-                    } else {
-                        res.send({ error: svErr })
+                    // check for privs
+                    if (!checkPrivs(req.user.id, collection.teamId, ["owner", "admin"])) {
+                        res.send({ error: "You have no privileges to perform this action." })
+                        return
                     }
-                })
-            } else {
-                res.send({ error: err })
-            }
+
+                    collection.name = collectionName
+                    collection.save((svErr, svCol) => {
+                        if (!svErr) {
+                            res.send(collection)                                        
+                        } else {
+                            res.send({ error: svErr })
+                        }
+                    })
+                } else {
+                    res.send({ error: err })
+                }
         })
     }
 }

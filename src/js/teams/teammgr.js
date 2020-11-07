@@ -96,7 +96,7 @@ function manageTeamModal() {
                                 <li data-tab="manageTeamTab:members" data-name="members" class="tab manageTeamTab"><a>Members</a></li>
                                 <li data-tab="manageTeamTab:addmembers" data-name="addmembers" class="tab manageTeamTab"><a>Add Member</a></li>
                             </ul>
-                            <div>
+                            <div style="height: 200px; overflow: scroll;">
                                 <div data-tab="manageTeamTab:info" data-name="info" class="tab-content manageTeamTab tab-content-active">
                                     ${renderTeamInfo()}
                                 </div>
